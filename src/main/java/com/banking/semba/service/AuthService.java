@@ -130,7 +130,7 @@ public class AuthService {
                     });
         }
     }
-//
+///
     private ApiResponses<BankOtpResponse> getBankOtpResponseApiResponses(String mobile, BankOtpResponse response) {
         if (response.getOtpValid() == null || !response.getOtpValid()) {
             log.warn(LogMessages.OTP_INVALID, mobile);
