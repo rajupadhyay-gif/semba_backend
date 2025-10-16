@@ -4,6 +4,7 @@ package com.banking.semba.controller;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.BeneficiaryDTO;
 import com.banking.semba.dto.HttpResponseDTO;
+import com.banking.semba.dto.UpdateBeneficiaryDTO;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.service.BeneficiaryService;
 import jakarta.validation.Valid;
@@ -39,6 +40,26 @@ public class BeneficiaryController {
         return serviceResponse;
     }
 
+    @PutMapping("/update/payee/{payeeId}")
+    public ResponseEntity<HttpResponseDTO> updatePayee(
+            @RequestHeader("Authorization") String auth,
+            @PathVariable Long payeeId,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestBody UpdateBeneficiaryDTO updateBeneficiaryDTO
+    ) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(ValidationMessages.BAD_REQUEST, HttpStatus.UNAUTHORIZED.value(), ValidationMessages.USER_NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.updatePayee(
+                mobile, ip, deviceId, latitude, longitude, payeeId, updateBeneficiaryDTO
+        );
+        return serviceResponse;
+    }
 
 }
 

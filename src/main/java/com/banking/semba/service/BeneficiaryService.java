@@ -1,8 +1,11 @@
 package com.banking.semba.service;
 
+import com.banking.semba.GlobalException.CustomException;
+import com.banking.semba.GlobalException.GlobalExceptionHandler;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.BeneficiaryDTO;
 import com.banking.semba.dto.HttpResponseDTO;
+import com.banking.semba.dto.UpdateBeneficiaryDTO;
 import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -110,4 +114,57 @@ public class BeneficiaryService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new HttpResponseDTO("FAILURE", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to connect to bank API"));
         }
     }
+
+    public ResponseEntity<HttpResponseDTO> updatePayee(
+            String mobile, String ip, String deviceId,
+            Double latitude, Double longitude, Long payeeId,
+            UpdateBeneficiaryDTO updateBeneficiaryDTO) {
+
+        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
+        validationUtil.validateIpFormat(ip, mobile);
+        validationUtil.validateDeviceIdFormat(deviceId, mobile);
+
+        if (latitude != null && longitude != null) {
+            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
+        }
+
+        if (updateBeneficiaryDTO.getBeneficiaryName() == null || updateBeneficiaryDTO.getBeneficiaryName().isBlank()) {
+            return GlobalExceptionHandler.badRequest(ValidationMessages.BENEFICIARY_NAME_REQUIRED);
+        }
+
+        try {
+            String externalApiUrl = "https://dummyjson.com/users/" + payeeId;
+            webClient.put()
+                    .uri(externalApiUrl)
+                    .header("X-IP", ip)
+                    .header("X-Device-Id", deviceId)
+                    .header("Authorization", "Bearer " + mobile)
+                    .bodyValue(updateBeneficiaryDTO)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+
+            UpdateBeneficiaryDTO responseDto = new UpdateBeneficiaryDTO();
+            responseDto.setBeneficiaryName(updateBeneficiaryDTO.getBeneficiaryName());
+
+            return ResponseEntity.ok(new HttpResponseDTO(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.UPDATED_SUCCESSFULLY,
+                    responseDto
+            ));
+        } catch (WebClientResponseException e) {
+            throw new CustomException(
+                    String.valueOf(e.getStatusCode().value()),
+                    ValidationMessages.EXTERNAL_API_ERROR + ": " + e.getResponseBodyAsString()
+            );
+
+        } catch (Exception ex) {
+            throw new CustomException(
+                    String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
+                    ValidationMessages.INTERNAL_SERVER_ERROR + ": " + ex.getMessage()
+            );
+        }
+    }
+
 }
