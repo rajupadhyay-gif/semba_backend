@@ -1,8 +1,7 @@
 package com.banking.semba.controller;
 
-import com.banking.semba.dto.ApiResponses;
-import com.banking.semba.dto.SignupStartRequest;
-import com.banking.semba.dto.VerifyOtpRequest;
+import com.banking.semba.dto.*;
+import com.banking.semba.dto.response.BankMpinResponse;
 import com.banking.semba.dto.response.BankOtpResponse;
 import com.banking.semba.service.AuthService;
 import jakarta.validation.Valid;
@@ -37,6 +36,18 @@ public class AuthController {
     public Mono<ResponseEntity<ApiResponses<BankOtpResponse>>> verifyOtp(
             @RequestBody @Valid VerifyOtpRequest req) {
         return authService.verifyOtp(req)
+                .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
+    }
+
+    @PostMapping("/setMpin")
+    public Mono<ResponseEntity<ApiResponses<BankMpinResponse>>> setMpin(@RequestBody @Valid BankMpinRequest req) {
+        return authService.setMpin(req)
+                .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
+    }
+
+    @PostMapping("/login")
+    public Mono<ResponseEntity<ApiResponses<Map<String, Object>>>> login(@RequestBody @Valid LoginRequest req) {
+        return authService.login(req)
                 .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
     }
 }
