@@ -9,6 +9,7 @@ public class LogMessages {
     public static final String SIGNUP_REQUEST_RECEIVED = "{\"event\":\"signup_request\",\"mobile\":\"{}\"}";
     public static final String MOBILE_BLANK = "{\"event\":\"mobile_blank\",\"mobile\":\"{}\"}";
     public static final String MOBILE_INVALID_PATTERN = "{\"event\":\"invalid_mobile_pattern\",\"mobile\":\"{}\"}";
+    public static final String SIGNUP_REQUEST_UNEXCEPTED =  "{\"event\":\"Unexpected error during signupStart for mobile\",\"mobile\":\"{}\",\"error\":\"{}\"}";
     public static final String MOBILE_ALREADY_REGISTERED = "{\"event\":\"mobile_already_registered\",\"mobile\":\"{}\"}";
     public static final String USER_SAVED = "{\"event\":\"user_saved\",\"mobile\":\"{}\"}";
     public static final String CALLING_BANK_API = "{\"event\":\"calling_bank_api\",\"mobile\":\"{}\"}";
@@ -36,6 +37,7 @@ public class LogMessages {
     public static final String MPIN_DOES_NOT_MATCH = "{\"event\":\"mpin_not_match\",\"mobile\":\"{}\"}";
     public static final String MPIN_INVALID_PATTERN = "{\"event\":\"mpin_invalid_pattern\",\"mobile\":\"{}\"}";
     public static final String CONFIRM_MPIN_INVALID_PATTERN = "{\"event\":\"confirm_mpin_invalid_pattern\",\"mobile\":\"{}\"}";
+    public static final String MPIN_ERROR = "{\"event\":\"Unexpected error during MPIN set for\",\"mobile\":\"{}\",\"mobile\":\"{}\"}";
 
     ;
     public static final String CONFIRM_MPIN_BLANK = "{\"event\":\"confirm_mpin_blank\",\"mobile\":\"{}\"}";
@@ -97,7 +99,8 @@ public class LogMessages {
     //    public static final String GET_ACCOUNTS_SUCCESS = "Accounts list fetched successfully for mobile: {}";
 //    public static final String GET_ACCOUNT_SUCCESS = "Account details fetched successfully for mobile: {}";
     public static final String ACCOUNT_STATEMENT_FETCHED = "Account statement fetched for accountId: {} and mobile: {}";
-    public static final String BANK_API_ERROR = "Bank API error: {}";
+    public static final String BANK_API_ERROR = "Bank API error [{}]: {}";;
+
 
     //Card
     public static final String CARD_ADD_REQUEST = "CARD_ADD_REQUEST mobile={} maskedPan={}";
@@ -107,7 +110,7 @@ public class LogMessages {
     public static final String OTP_SENT = "OTP_SENT mobile={} maskedPan={}";
     public static final String OTP_VERIFY_REQUEST = "OTP_VERIFY_REQUEST mobile={} maskedPan={}";
     public static final String OTP_VERIFY_SUCCESS = "OTP_VERIFY_SUCCESS mobile={} maskedPan={}";
-    public static final String OTP_VERIFY_FAILED = "OTP_VERIFY_FAILED mobile={} reason={}";
+    public static final String OTP_VERIFY_FAILED = "Unexpected error during OTP verification for mobile {}: {}";
 
     public static final String DEVICE_VALIDATION_FAILED = "DEVICE_VALIDATION_FAILED mobile={} reason={}";
     public static final String GET_CARDS = "GET_CARDS mobile={} count={}";

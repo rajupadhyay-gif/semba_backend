@@ -11,30 +11,6 @@ import java.util.Date;
 import java.util.Map;
 
 
-//public class JwtTokenService {
-//
-//    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-//
-//    public String generateAccessToken(Map<String, Object> claims, String subject) {
-//        return Jwts.builder()
-//                .setClaims(claims)
-//                .setSubject(subject)
-//                .setIssuedAt(new Date())
-//                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 10))) // 10 min
-//                .signWith(key, SignatureAlgorithm.HS256)
-//                .compact();
-//    }
-//
-//    // Parse Token
-//    public Claims parseToken(String token) {
-//        return Jwts.parserBuilder()
-//                .setSigningKey(key)
-//                .build()
-//                .parseClaimsJws(token)
-//                .getBody();
-//    }
-//}
-
 @Service
 public class JwtTokenService {
 

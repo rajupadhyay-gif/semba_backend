@@ -10,8 +10,9 @@ public class ValidationMessages {
     public static final String MOBILE_BLANK = "Mobile number cannot be blank";
     public static final String MOBILE_INVALID_PATTERN = "Mobile number must be exactly 10 digits";
     public static final String MOBILE_ALREADY_REGISTERED = "Mobile number already registered";
-    public static final String OTP_FAILED = "Failed to send OTP via Bank API for mobile";
+    public static final String BANKING_FAILED = "Bank API error";
     public static final String OTP_SENT_SUCCESS = "OTP sent successfully";
+    public static final String ERROR_CALL_API = " Unexpected error while calling bank API";
 
     public static final String JWT_EXPIRED = "JWT token in expired";
     public static final String JWT_EXPIREDD = "JWT token in expired";
@@ -19,6 +20,8 @@ public class ValidationMessages {
     public static final String USER_NOT_FOUND = "User not found";
     public static final String OTP_BLANK = "OTP cannot be blank";
     public static final String OTP_INVALID = "Invalid OTP";
+    public static final String OTP_FAILED_BANK ="Unexpected error while calling bank API";
+
     public static final String OTP_VERIFIED_SUCCESS = "OTP verified successfully";
 
     //Resend OTP
