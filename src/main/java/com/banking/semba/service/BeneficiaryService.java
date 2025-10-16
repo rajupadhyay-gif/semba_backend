@@ -37,7 +37,6 @@ public class BeneficiaryService {
 //            .baseUrl("https://api.paystack.co")//just for testing I integrated here
 //            .baseUrl("https://ifsc.razorpay.com")
             .build();
-    // Static bank info
     private static final List<String> BANKS = List.of(
             "HDFC", "ICICI", "SBI", "AXIS", "KOTAK MAHINDRA", "INDUSIND", "YES BANK", "IDFC FIRST",
             "BANDHAN", "FEDERAL BANK", "RBL BANK", "PNB", "CANARA BANK", "UNION BANK", "BANK OF INDIA",
@@ -47,7 +46,9 @@ public class BeneficiaryService {
             String mobile, String ip, String deviceId,
             Double latitude, Double longitude,
             BeneficiaryDTO beneficiaryDTO) {
-        String url = "https://jsonplaceholder.typicode.com/posts";
+
+        String externalUrl = "https://jsonplaceholder.typicode.com/posts";
+
         userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
         validationUtil.validateIpFormat(ip, mobile);
         validationUtil.validateDeviceIdFormat(deviceId, mobile);
@@ -94,7 +95,7 @@ public class BeneficiaryService {
             );
 
             Map<String, Object> response = webClient.post()
-                    .uri(url)
+                    .uri(externalUrl)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .bodyValue(requestBody)
                     .retrieve()
