@@ -6,7 +6,7 @@ public class ErrorResponse {
     private int status;
     private String error;
     private String message;
-    private LocalDateTime timestamp; //for timing
+    private LocalDateTime timestamp; //no db neededd
 
     public ErrorResponse(int status, String error, String message) {
         this.status = status;
