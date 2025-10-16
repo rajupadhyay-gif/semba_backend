@@ -1,5 +1,6 @@
 package com.banking.semba.GlobalException;
 
+import com.banking.semba.dto.HttpResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,5 +35,15 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_ERROR", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    public static ResponseEntity<HttpResponseDTO> badRequest(String message) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new HttpResponseDTO(
+                        "BAD_REQUEST",
+                        HttpStatus.BAD_REQUEST.value(),
+                        message
+                ));
     }
 }

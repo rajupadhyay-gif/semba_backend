@@ -3,6 +3,7 @@ package com.banking.semba.constants;
 public class ValidationMessages {
 
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
+    public static final String BAD_REQUEST = "BAD_REQUEST";
 
     private ValidationMessages() {
     }
@@ -100,8 +101,39 @@ public class ValidationMessages {
 //    public static final String ACCOUNT_ALREADY_EXISTS = "Account already linked with this user";
 //    public static final String ACCOUNT_NUMBER_BLANK = "Account number cannot be blank";
 
+    public static final String UPDATED_SUCCESSFULLY = "Payee updated successfully" ;
+    public static final String FETCHED_SUCCESSFULLY = "Banks fetched successfully";
+    public static final String NO_CONTACTS_FOUND= "No contacts found";
+    public static final String CONTACTS_FETCHED_SUCCESSFULLY="Contacts fetched successfully";
+    public static final String STATUS_ERROR = "Internal Server Error";
+    public static final String NO_RECENT_PAYMENTS = "No payments found";
+    public static final String SENDER_MOBILE_REQUIRED = "Sender mobile number is required";
+    public static final String INVALID_MOBILE_FORMAT = "Invalid mobile number format";
+    public static final String RECENT_PAYMENTS_FETCHED = "Recent payments fetched successfully";
+    public static final String UPI_ID_VERIFIED_SUCCESSFULLY = "UPI Id verified Successfully";
+    public static final String NO_UPIID_FOUND = "UPI Id Not Found";
+    public static final String MSG_PAYEES_FETCHED = "Payees fetched successfully";
+    public static final String SAME_NAME_UPDATE = "New beneficiary name is the same as the existing name";
+    public static final String NOT_FOUND = "Not Found";
+    public static final String EXTERNAL_API_ERROR = "External API error occurred";
+    public static final String EXTERNAL_API_NO_RESPONSE = "No response from external API";
+    public static final String UPDATE_FAILED = "Failed to update payee";
+    public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
+    public static final String BENEFICIARY_ADDED_SUCCESSFULLY = "Beneficiary Added Successfully";
+    public static final String STATUS_OK = "SUCCESS";
 
-
+    public static final String NO_BANKS_FOUND = "No banks found from external API";
+    public static final String INVALID_JWT = "Invalid JWT token or mobile not found";
+    public static final String NO_PAYEES_FOUND = "No payees found for this user";
+    public static final String INVALID_BANK = "Invalid bank selected";
+    public static final String BENEFICIARY_NAME_REQUIRED = "Beneficiary name is required";
+    public static final String ACCOUNT_NUMBER_MISMATCH = "Account number and confirm account number do not match";
+    public static final String INVALID_IFSC = "Invalid IFSC format";
+    public static final String STATUS_UNAUTHORIZED = "UNAUTHORIZED";
+    public static final String STATUS_FORBIDDEN = "FORBIDDEN";
+    public static final String CONFLICT = "Conflict";
+    public static final String BANK_ID_REQUIRED = "Please Enter Valid Bank ID";
+    public static final String ACCOUNT_NUMBER_REQUIRED = "Please Enter Valid Account Number";
 
 
 }
