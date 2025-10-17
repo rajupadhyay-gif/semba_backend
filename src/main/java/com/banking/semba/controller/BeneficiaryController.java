@@ -40,6 +40,30 @@ public class BeneficiaryController {
         return serviceResponse;
     }
 
+
+    @GetMapping("/fetch/payees")
+    public ResponseEntity<HttpResponseDTO> getAllPayees(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+    ) {
+
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.BAD_REQUEST,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.getAllPayees(mobile, ip, deviceId, latitude, longitude);
+        return serviceResponse;
+    }
+
     @PutMapping("/update/payee/{payeeId}")
     public ResponseEntity<HttpResponseDTO> updatePayee(
             @RequestHeader("Authorization") String auth,
@@ -58,6 +82,28 @@ public class BeneficiaryController {
         ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.updatePayee(
                 mobile, ip, deviceId, latitude, longitude, payeeId, updateBeneficiaryDTO
         );
+        return serviceResponse;
+    }
+
+    @DeleteMapping("/delete/payee/{payeeId}")
+    public ResponseEntity<HttpResponseDTO> deletePayee(
+            @RequestHeader("Authorization") String auth,
+            @PathVariable Long payeeId,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+    ) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.BAD_REQUEST,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.deletePayee(mobile, ip, deviceId, latitude, longitude, payeeId);
         return serviceResponse;
     }
 
