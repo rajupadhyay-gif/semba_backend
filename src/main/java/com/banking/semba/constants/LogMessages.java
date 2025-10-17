@@ -70,14 +70,15 @@ public class LogMessages {
     public static final String JWT_INVALID = "{\"event\":\"jwt_invalid\",\"reason\":\"{}\"}";
 
     // Profile
-    public static final String PROFILE_REQUEST = "{\"event\":\"profile_request\",\"mobile\":\"{}\"}";
-    public static final String PROFILE_FETCHED_SUCCESS = "{\"event\":\"profile_fetched_success\",\"mobile\":\"{}\"}";
-    public static final String ACCESS_DENIED = "Access denied for mobile: {}";
-    public static final String FIRST_LOGIN_FETCH_START = "First-time login for mobile={}, fetching linked bank accounts...";
-    public static final String FIRST_LOGIN_FETCH_SUCCESS = "{} accounts linked successfully for mobile={}";
-    public static final String ACCOUNT_FETCH_SUCCESS = "Fetched account details for mobile={} ({} accounts)";
-    public static final String ACCOUNT_ADDED_SUCCESS = "Account={} successfully linked for mobile={}";
-    public static final String GET_ACCOUNT_SUCCESS = "Profile fetched successfully for mobile={}";
+    public static final String PROFILE_FETCH_START = "Fetching profile for mobile {}";
+    public static final String PROFILE_FETCH_SUCCESS = "Profile fetch success for mobile {}";
+    public static final String PROFILE_FETCH_FAILED = "Profile fetch failed for mobile {}: {}";
+
+    public static final String ACCOUNT_FETCH_START = "Fetching account {}";
+    public static final String ACCOUNT_FETCH_SUCCESS = "Account fetch success for id {}";
+    public static final String ACCOUNT_FETCH_FAILED = "Account fetch failed for id {}: {}";
+
+    public static final String BANK_API_ERROR = "Bank API error [{}]: {}";
 
     // ---------- Refresh Token ----------
     public static final String REFRESH_TOKEN_REQUEST = "Refresh token request received | deviceId={} | ip={}";
@@ -99,7 +100,7 @@ public class LogMessages {
     //    public static final String GET_ACCOUNTS_SUCCESS = "Accounts list fetched successfully for mobile: {}";
 //    public static final String GET_ACCOUNT_SUCCESS = "Account details fetched successfully for mobile: {}";
     public static final String ACCOUNT_STATEMENT_FETCHED = "Account statement fetched for accountId: {} and mobile: {}";
-    public static final String BANK_API_ERROR = "Bank API error [{}]: {}";;
+//    public static final String BANK_API_ERROR = "Bank API error [{}]: {}";;
 
 
     //Card

@@ -4,13 +4,11 @@ import com.banking.semba.dto.*;
 import com.banking.semba.dto.response.BankMpinResponse;
 import com.banking.semba.dto.response.BankOtpResponse;
 import com.banking.semba.service.AuthService;
+import com.banking.semba.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -20,9 +18,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final CustomerService customerService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, CustomerService customerService) {
         this.authService = authService;
+        this.customerService = customerService;
     }
 
     @PostMapping("/signup")
@@ -50,4 +50,29 @@ public class AuthController {
         return authService.login(req)
                 .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
     }
+    @GetMapping("/signupProfile")
+    public ResponseEntity<ApiResponses<Map<String, Object>>> getProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+    ) {
+        ApiResponses<Map<String, Object>> response = customerService.getProfile(authHeader, ip, deviceId, latitude, longitude);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/signupProfile/{id}")
+    public ResponseEntity<ApiResponses<Map<String, Object>>> getAccountById(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+    ) {
+        ApiResponses<Map<String, Object>> response = customerService.getAccountById(id, authHeader, deviceId, ip, latitude, longitude);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }
+
