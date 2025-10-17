@@ -4,6 +4,12 @@ public class ValidationMessages {
 
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String BAD_REQUEST = "BAD_REQUEST";
+    public static final String FAILURE = "Filed to fetch the payees list";
+    public static final String MSG_PAYEE_DELETED_SUCCESS = "Payee Deleted Successfully";
+    public static final String CLIENT_ERROR = "Client error while deleting payee";
+    public static final String SERVER_ERROR = "Server error while deleting payee";
+    public static final Object DELETED_PAYEE = "Deleted beneficiary with ID: ";
+    public static final String FAILED_TO_DELETE = "Deleted beneficiary with ID: ";
 
     private ValidationMessages() {
     }
