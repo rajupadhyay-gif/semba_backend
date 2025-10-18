@@ -68,8 +68,11 @@ public class CustomerService {
             data.put("profile", mockProfile);
 
             log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    data);
         }
 
         try {
@@ -101,8 +104,11 @@ public class CustomerService {
             data.put("profile", bankResponse.getProfile());
             log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
 
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
             log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
@@ -139,8 +145,11 @@ public class CustomerService {
             data.put("account", mockAccount);
 
             log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    data);
         }
 
         try {
@@ -172,8 +181,11 @@ public class CustomerService {
             data.put("account", bankResponse.getAccount());
 
             log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
             log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());

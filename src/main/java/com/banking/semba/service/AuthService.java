@@ -69,7 +69,8 @@ public class AuthService {
                 .bodyToMono(BankOtpResponse.class)
                 .map(response -> {
                     log.info(LogMessages.OTP_SUCCESS, mobile);
-                    return new ApiResponses<>("SUCCESS",
+                    return new ApiResponses<>(
+                            "SUCCESS",
                             HttpStatus.CREATED.value(),
                             ValidationMessages.OTP_SENT_SUCCESS,
                             response);
@@ -211,7 +212,7 @@ public class AuthService {
         validationUtil.validateDeviceIdFormat(req.getDeviceId(), mobile);
         validationUtil.validateLocation(req.getLatitude(), String.valueOf(req.getLongitude()), mobile);
 
-        boolean useMock = true; // set false to call real bank API
+        boolean useMock = true;
 
         if (useMock) {
             // ---------------- MOCK Bank verification ----------------
@@ -284,7 +285,11 @@ public class AuthService {
             throw new GlobalException(ValidationMessages.OTP_INVALID, HttpStatus.BAD_REQUEST.value());
         }
         log.info(LogMessages.OTP_VERIFIED_SUCCESS, mobile);
-        return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(), ValidationMessages.OTP_VERIFIED_SUCCESS, response);
+        return new ApiResponses<>(
+                "SUCCESS",
+                HttpStatus.OK.value(),
+                ValidationMessages.OTP_VERIFIED_SUCCESS,
+                response);
     }
 }
 

@@ -87,7 +87,13 @@ public class ValidationMessages {
     public static final String CARD_ALREADY_EXISTS = "Card already exists for this user";
     public static final String OTP_FORMAT_INVALID = "OTP must be 6 digits";
     public static final String CARD_NOT_FOUND = "Card not found or not owned by user";
-    public static final String TOO_MANY_OTP_ATTEMPTS = "Too many invalid OTP attempts. Try again later.";
+    public static final String CARD_ADDED_SUCCESS = "Card add Successfully";
+    public static final String CARD_ADD_FAILED = "Card added failed";
+    public static final String CARD_OTP_VERIFY_SUCCESS = "Card otp verified successfully";
+    public static final String CARDS_LIST_FETCH_SUCCESS = "Cards list fetched successfully";
+    public static final String CARDS_FETCH_FAILED = "Cards list fetched failed";
+
+
 
     // Bank Transfer
     public static final String ACCOUNT_BLANK = "Account number cannot be blank";
