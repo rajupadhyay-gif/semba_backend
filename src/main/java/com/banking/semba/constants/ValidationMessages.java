@@ -108,10 +108,16 @@ public class ValidationMessages {
     ;
 
 
-    public static final String ACCOUNT_LINKED = "Account linked successfully";
-    public static final String ACCOUNT_FETCHED = "Fetched account details successfully";
-    public static final String ACCOUNTS_FETCHED = "Fetched all linked accounts successfully";
-    public static final String BALANCE_FETCHED = "Fetched account balance successfully";
+    public static final String ACCOUNT_FETCH_SUCCESS = "Account details fetched successfully.";
+    public static final String ACCOUNT_FETCH_FAILED = "Failed to fetch account details.";
+    public static final String BANK_API_FAILED = "Bank API call failed. Please try again later.";
+    public static final String UNKNOWN_ERROR = "Something went wrong. Please try again later.";
+    public static final String FUND_TRANSFER_ERROR = "Client error during fund transfer.";
+    public static final String FUND_TRANSFER_SERVERERROR = "Fund transfer error during fund transfer.";
+    public static final String FETCH_ACCOUNT_ERROR = "Client error while fetching account.";
+    public static final String FETCH_SERVER_ERROR = "Server error while fetching account.";
+
+
 //    public static final String ACCOUNT_NOT_FOUND = "Account not found";
 //    public static final String ACCOUNT_ALREADY_EXISTS = "Account already linked with this user";
 //    public static final String ACCOUNT_NUMBER_BLANK = "Account number cannot be blank";
@@ -156,5 +162,5 @@ public class ValidationMessages {
     public static final String PROFILE_FETCH_FAILED = "Failed to fetch profile";
     public static final String ACCOUNT_FETCH_ERROR = "Failed to fetch account";
     public static final String INVALID_RESPONSE = "Invalid response from bank API";
-    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
+//    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
 }
