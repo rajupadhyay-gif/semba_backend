@@ -10,6 +10,9 @@ public class ValidationMessages {
     public static final String SERVER_ERROR = "Server error while deleting payee";
     public static final Object DELETED_PAYEE = "Deleted beneficiary with ID: ";
     public static final String FAILED_TO_DELETE = "Deleted beneficiary with ID: ";
+    public static final String ERROR_CODE_FETCH_FAILED = "501";
+    public static final String ERROR_CODE_NO_BANKS = "404";
+    public static final String STATUS_FAILED = "Failed";
 
     private ValidationMessages() {
     }
@@ -147,7 +150,7 @@ public class ValidationMessages {
     public static final String BANK_ID_REQUIRED = "Please Enter Valid Bank ID";
     public static final String ACCOUNT_NUMBER_REQUIRED = "Please Enter Valid Account Number";
 
-
+    public static final String FETCHING_FAILED="Failed to fetch banks list: ";
     public static final String BANK_API_FAILED = "Bank API call failed";
     public static final String PROFILE_FETCH_SUCCESS = "Profile fetched successfully";
     public static final String PROFILE_FETCH_FAILED = "Failed to fetch profile";

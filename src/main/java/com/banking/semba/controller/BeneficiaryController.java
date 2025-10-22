@@ -6,6 +6,7 @@ import com.banking.semba.dto.BeneficiaryDTO;
 import com.banking.semba.dto.HttpResponseDTO;
 import com.banking.semba.dto.UpdateBeneficiaryDTO;
 import com.banking.semba.security.JwtTokenService;
+import com.banking.semba.service.BankService;
 import com.banking.semba.service.BeneficiaryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class BeneficiaryController {
     private final JwtTokenService jwtTokenService;
     private final BeneficiaryService beneficiaryService;
+    private final BankService bankService;
 
-    public BeneficiaryController(JwtTokenService jwtTokenService, BeneficiaryService beneficiaryService) {
+    public BeneficiaryController(JwtTokenService jwtTokenService, BeneficiaryService beneficiaryService, BankService bankService) {
         this.jwtTokenService = jwtTokenService;
         this.beneficiaryService = beneficiaryService;
+        this.bankService = bankService;
     }
 
     @PostMapping("/add")
@@ -106,6 +109,46 @@ public class BeneficiaryController {
         ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.deletePayee(mobile, ip, deviceId, latitude, longitude, payeeId);
         return serviceResponse;
     }
+
+    @GetMapping("/fetch/topBanksList")
+    public ResponseEntity<HttpResponseDTO> fetchTopBanksList(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+    ) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.BAD_REQUEST,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        HttpResponseDTO response = bankService.fetchTopBanksList(auth, ip, deviceId, latitude, longitude);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+    @GetMapping("/search/bankName")
+    public ResponseEntity<HttpResponseDTO> searchBank(@RequestHeader("Authorization")String auth,
+                                                      @RequestHeader("X-IP") String ip,
+                                                      @RequestHeader("X-Device-Id") String deviceId,
+                                                      @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+                                                      @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+                                                      @RequestParam String bankName) {
+        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+        HttpResponseDTO response = bankService.searchBanks(auth, ip, deviceId, latitude, longitude, bankName);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+
 
 }
 
