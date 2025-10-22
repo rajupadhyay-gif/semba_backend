@@ -116,8 +116,11 @@ public class CardService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("card", bankResponse.getCard());
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.CARD_ADDED_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.CARD_ADDED_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
             log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
@@ -182,8 +185,11 @@ public class CardService {
             Map<String, Object> data = new HashMap<>();
             data.put("verified", true);
             data.put("verifiedAt", LocalDateTime.now());
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.CARD_OTP_VERIFY_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.CARD_OTP_VERIFY_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
             log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
@@ -229,8 +235,11 @@ public class CardService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("cards", bankResponse.getCards());
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.CARDS_LIST_FETCH_SUCCESS, data);
+            return new ApiResponses<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    ValidationMessages.CARDS_LIST_FETCH_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
             throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
