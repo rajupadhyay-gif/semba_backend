@@ -122,5 +122,31 @@ public class LogMessages {
     public static final String TRANSFER_SUCCESS = "Transfer SUCCESS: {} -> {} Amount: {}";
     public static final String TRANSFER_FAILED = "Transfer FAILED: {} -> {} Amount: {} Reason: {}";
     public static final String OTP_VERIFICATION = "OTP verification for user {} account {}";
+    public static final String ACCESS_DENIED = "{\"event\":\"access_denied\",\"mobile\":\"{}\"}";
+    public static final String GET_ACCOUNT_SUCCESS = "{\"event\":\"get_account_success\",\"mobile\":\"{}\"}";
+    public static final String ACCOUNT_IS_ALREADY_EXISTS = "{\"event\":\"account_number\",\"accountNumber\":\"{}\"}";
+    public static final String FETCH_BANKS_STARTED = "{\"event\":\"fetch_banks_started\",\"message\":\"Fetching bank list from external API\"}";
+    public static final String FETCH_BANKS_SUCCESS = "{\"event\":\"fetch_banks_success\",\"message\":\"Successfully fetched bank list from external API\"}";
+    public static final String FETCH_BANKS_NULL = "{\"event\":\"fetch_banks_null_response\",\"message\":\"Bank list API returned null or empty\"}";
+    public static final String FETCH_BANKS_ERROR = "{\"event\":\"fetch_banks_error\",\"error\":\"{}\"}";
+    public static final String FETCH_BANKS_UNEXPECTED_ERROR = "{\"event\":\"fetch_banks_unexpected_error\",\"error\":\"{}\"}";
+
+    public static final String API_CALL = "{\"event\":\"external_api_call\",\"url\":\"{}\"}";
+    public static final String API_RESPONSE = "{\"event\":\"external_api_response\",\"status\":\"{}\"}";
+
+    // ---------- Refresh Token ----------
+    public static final String SEARCH_BANKS_STARTED = "{\"event\":\"search_banks_started\",\"message\":\"Search banks started\"}";
+    public static final String SEARCH_BANKS_SUCCESS = "{\"event\":\"search_banks_success\",\"message\":\"Searched banks successfully!\"}";
+    public static final String SEARCH_CONTACTS_ERROR = "{\"event\":\"search_contacts_error\",\"error\":\"{}\"}";
+    public static final String SEARCH_CONTACTS_START = "{\"event\":\"search_contacts_start\",\"mobile\":\"{}\",\"name\":\"{}\"}";
+    public static final String SEARCH_CONTACTS_SUCCESS = "{\"event\":\"search_contacts_success\",\"count\":{}}";
+
+    public static final String UPIID_VALIDATION_START = "{\"event\":\"upiid_validation_start\",\"upiId\":\"{}\"}";
+    public static final String UPIID_VALIDATION_UNAUTHORIZED = "{\"event\":\"upiid_validation_unauthorized\",\"message\":\"{}\"}";
+    public static final String UPIID_VALIDATION_ERROR = "{\"event\":\"upiid_validation_error\",\"message\":\"{}\"}";
+    public static final String UPIID_VALIDATION_NOT_FOUND = "{\"event\":\"upiid_validation_not_found\",\"upiId\":\"{}\"}";
+    public static final String UPIID_VALIDATION_SUCCESS = "{\"event\":\"upiid_validation_success\",\"upiId\":\"{}\",\"name\":\"{}\"}";
+
+
 }
 
