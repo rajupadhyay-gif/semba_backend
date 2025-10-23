@@ -95,6 +95,7 @@ public class ValidationMessages {
     public static final String CARD_OTP_VERIFY_SUCCESS = "Card otp verified successfully";
     public static final String CARDS_LIST_FETCH_SUCCESS = "Cards list fetched successfully";
     public static final String CARDS_FETCH_FAILED = "Cards list fetched failed";
+    public static final String PAYMENT_SUCCESS = "Payment successful";
 
 
 

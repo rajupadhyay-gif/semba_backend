@@ -115,7 +115,8 @@ public class LogMessages {
 
     public static final String DEVICE_VALIDATION_FAILED = "DEVICE_VALIDATION_FAILED mobile={} reason={}";
     public static final String GET_CARDS = "GET_CARDS mobile={} count={}";
-
+    public static final String PAYMENT_REQUEST = "Payment request received for mobile: {}, card: {}";
+    public static final String PAYMENT_SUCCESS = "Payment successful for mobile: {}, card: {}";
 
     //Bank transfer
     public static final String TRANSFER_REQUEST = "Transfer requested by user {} from {} to {}";
