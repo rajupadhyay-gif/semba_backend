@@ -42,7 +42,7 @@ public class AuthService {
     }
 
     // ---------------- Signup (Send OTP) ----------------
-    public Mono<ApiResponses<BankOtpResponse>> signupStart(SignupStartRequest req) {
+    public Mono<ApiResponseDTO<BankOtpResponse>> signupStart(SignupStartRequest req) {
         String mobile = req.getMobile().trim();
         log.info(LogMessages.SIGNUP_REQUEST_RECEIVED, mobile);
 
@@ -69,7 +69,7 @@ public class AuthService {
                 .bodyToMono(BankOtpResponse.class)
                 .map(response -> {
                     log.info(LogMessages.OTP_SUCCESS, mobile);
-                    return new ApiResponses<>(
+                    return new ApiResponseDTO<>(
                             "SUCCESS",
                             HttpStatus.CREATED.value(),
                             ValidationMessages.OTP_SENT_SUCCESS,
@@ -88,7 +88,7 @@ public class AuthService {
     }
 
     // ---------------- Verify OTP ----------------
-    public Mono<ApiResponses<BankOtpResponse>> verifyOtp(VerifyOtpRequest req) {
+    public Mono<ApiResponseDTO<BankOtpResponse>> verifyOtp(VerifyOtpRequest req) {
         String mobile = req.getMobile().trim();
         String otp = req.getOtp();
         log.info(LogMessages.OTP_VERIFY_REQUEST_RECEIVED, mobile);
@@ -140,7 +140,7 @@ public class AuthService {
         }
     }
 
-    public Mono<ApiResponses<BankMpinResponse>> setMpin(@Valid BankMpinRequest req) {
+    public Mono<ApiResponseDTO<BankMpinResponse>> setMpin(@Valid BankMpinRequest req) {
         String mobile = req.getMobile().trim();
         String mpin = req.getMpin();
         String confirmMpin = req.getConfirmMpin();
@@ -166,7 +166,7 @@ public class AuthService {
             return Mono.fromSupplier(() -> {
                 BankMpinResponse response = new BankMpinResponse("TXN123456", "MPIN set successfully");
                 log.info("Mock MPIN set success for {}", mobile);
-                return new ApiResponses<>("SUCCESS",
+                return new ApiResponseDTO<>("SUCCESS",
                         HttpStatus.OK.value(),
                         "MPIN set successfully",
                         response);
@@ -181,7 +181,7 @@ public class AuthService {
                     .bodyValue(bankRequest)
                     .retrieve()
                     .bodyToMono(BankMpinResponse.class)
-                    .map(response -> new ApiResponses<>("SUCCESS",
+                    .map(response -> new ApiResponseDTO<>("SUCCESS",
                             HttpStatus.OK.value(),
                             ValidationMessages.MPIN_SET_SUCCESS,
                             response))
@@ -198,7 +198,7 @@ public class AuthService {
         }
     }
 
-    public Mono<ApiResponses<Map<String, Object>>> login(LoginRequest req) {
+    public Mono<ApiResponseDTO<Map<String, Object>>> login(LoginRequest req) {
         String mobile = req.getMobile().trim();
         String mpin = req.getMpin();
         log.info(LogMessages.LOGIN_REQUEST, mobile);
@@ -229,7 +229,7 @@ public class AuthService {
                 data.put("bankJwt", "MOCK_BANK_JWT_" + mobile);
 
                 log.info(LogMessages.LOGIN_SUCCESS, mobile);
-                return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(), ValidationMessages.LOGIN_SUCCESS, data);
+                return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(), ValidationMessages.LOGIN_SUCCESS, data);
             });
         } else {
             // ---------------- Call real bank API ----------------
@@ -262,7 +262,7 @@ public class AuthService {
                         data.put("bankJwt", bankResp.getBankJwt());
 
                         log.info(LogMessages.LOGIN_SUCCESS, mobile);
-                        return Mono.just(new ApiResponses<>(
+                        return Mono.just(new ApiResponseDTO<>(
                                 "SUCCESS",
                                 HttpStatus.OK.value(),
                                 ValidationMessages.LOGIN_SUCCESS,
@@ -279,13 +279,13 @@ public class AuthService {
         }
     }
 
-    private ApiResponses<BankOtpResponse> getBankOtpResponseApiResponses(String mobile, BankOtpResponse response) {
+    private ApiResponseDTO<BankOtpResponse> getBankOtpResponseApiResponses(String mobile, BankOtpResponse response) {
         if (response.getOtpValid() == null || !response.getOtpValid()) {
             log.warn(LogMessages.OTP_INVALID, mobile);
             throw new GlobalException(ValidationMessages.OTP_INVALID, HttpStatus.BAD_REQUEST.value());
         }
         log.info(LogMessages.OTP_VERIFIED_SUCCESS, mobile);
-        return new ApiResponses<>(
+        return new ApiResponseDTO<>(
                 "SUCCESS",
                 HttpStatus.OK.value(),
                 ValidationMessages.OTP_VERIFIED_SUCCESS,

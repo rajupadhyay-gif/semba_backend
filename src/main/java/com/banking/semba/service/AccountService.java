@@ -3,7 +3,7 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.ApiResponses;
+import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.FundTransferDTO;
 import com.banking.semba.dto.response.AccountResponse;
 import com.banking.semba.dto.response.PaymentResponse;
@@ -13,12 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -38,8 +36,8 @@ public class AccountService {
     private static final boolean useMock = true;
 
     // Fetch Account Details//
-    public ApiResponses<Map<String, Object>> getAccountById(Long id, String mobile, String ip, String deviceId,
-                                                            Double latitude, Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> getAccountById(Long id, String mobile, String ip, String deviceId,
+                                                              Double latitude, Double longitude) {
         log.info(LogMessages.ACCOUNT_FETCH_START, mobile);
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
@@ -90,14 +88,14 @@ public class AccountService {
         }
         data.put("account", account);
         log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, mobile);
-        return new ApiResponses<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
+        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
                 ValidationMessages.ACCOUNT_FETCH_SUCCESS, data);
     }
 
     // Fetch Live Balance //
-    public ApiResponses<Map<String, Object>> getLiveBalance(String accountNumber, String mobile,
-                                                            String ip, String deviceId,
-                                                            Double latitude, Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> getLiveBalance(String accountNumber, String mobile,
+                                                              String ip, String deviceId,
+                                                              Double latitude, Double longitude) {
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
         Map<String, Object> data = new HashMap<>();
@@ -136,14 +134,14 @@ public class AccountService {
         }
 
         data.put("balance", balance);
-        return new ApiResponses<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
+        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
                 ValidationMessages.ACCOUNT_FETCH_SUCCESS, data);
     }
 
     //Fund Transfer//
-    public ApiResponses<Map<String, Object>> transferFunds(FundTransferDTO dto, String mobile,
-                                                           String ip, String deviceId,
-                                                           Double latitude, Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> transferFunds(FundTransferDTO dto, String mobile,
+                                                             String ip, String deviceId,
+                                                             Double latitude, Double longitude) {
         validateRequest(mobile, ip, deviceId, latitude, longitude);
         validateTransfer(dto, mobile);
 
@@ -199,7 +197,7 @@ public class AccountService {
         }
 
         data.put("payment", paymentResponse);
-        return new ApiResponses<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
+        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
                 "Payment completed", data);
     }
 

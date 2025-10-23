@@ -1,6 +1,6 @@
 package com.banking.semba.controller;
 
-import com.banking.semba.dto.ApiResponses;
+import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.FundTransferDTO;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.service.AccountService;
@@ -21,7 +21,7 @@ public class BankController {
 
     /* Fetch Account Details */
     @GetMapping("/accounts/{id}")
-    public ResponseEntity<ApiResponses<Map<String, Object>>> getAccount(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getAccount(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-IP") String ip,
@@ -31,14 +31,14 @@ public class BankController {
 
         String mobile = jwtService.extractMobileFromHeader(authHeader);
 
-        ApiResponses<Map<String, Object>> response =
+        ApiResponseDTO<Map<String, Object>> response =
                 accountService.getAccountById(id, mobile, ip, deviceId, latitude, longitude);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     /*Fetch Live Balance */
     @GetMapping("/accounts/{accountNumber}/balance")
-    public ResponseEntity<ApiResponses<Map<String, Object>>> getBalance(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getBalance(
             @PathVariable String accountNumber,
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-IP") String ip,
@@ -48,14 +48,14 @@ public class BankController {
 
         String mobile = jwtService.extractMobileFromHeader(authHeader);
 
-        ApiResponses<Map<String, Object>> response =
+        ApiResponseDTO<Map<String, Object>> response =
                 accountService.getLiveBalance(accountNumber, mobile, ip, deviceId, latitude, longitude);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     /* Fund Transfers (UPI, MOBILE, BANK, CREDIT/DEBIT CARD) */
     @PostMapping("/payments")
-    public ResponseEntity<ApiResponses<Map<String, Object>>> makePayment(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> makePayment(
             @RequestBody FundTransferDTO dto,
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-IP") String ip,
@@ -65,7 +65,7 @@ public class BankController {
 
         String mobile = jwtService.extractMobileFromHeader(authHeader);
 
-        ApiResponses<Map<String, Object>> response =
+        ApiResponseDTO<Map<String, Object>> response =
                 accountService.transferFunds(dto, mobile, ip, deviceId, latitude, longitude);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
