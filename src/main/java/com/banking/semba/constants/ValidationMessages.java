@@ -157,7 +157,6 @@ public class ValidationMessages {
     public static final String ACCOUNT_NUMBER_REQUIRED = "Please Enter Valid Account Number";
 
     public static final String FETCHING_FAILED="Failed to fetch banks list: ";
-    public static final String BANK_API_FAILED = "Bank API call failed";
     public static final String PROFILE_FETCH_SUCCESS = "Profile fetched successfully";
     public static final String PROFILE_FETCH_FAILED = "Failed to fetch profile";
     public static final String ACCOUNT_FETCH_ERROR = "Failed to fetch account";

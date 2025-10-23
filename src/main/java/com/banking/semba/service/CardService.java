@@ -3,7 +3,7 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.ApiResponses;
+import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.CardOtpRequest;
 import com.banking.semba.dto.CardRequest;
 import com.banking.semba.dto.response.BankCardResponse;
@@ -42,12 +42,12 @@ public class CardService {
     private static final int MAX_OTP_ATTEMPTS = 3;
     private static final String DEMO_OTP = "123456";
 
-    public ApiResponses<Map<String, Object>> addCard(CardRequest req,
-                                                     String mobile,
-                                                     String ip,
-                                                     String deviceId,
-                                                     Double latitude,
-                                                     Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> addCard(CardRequest req,
+                                                       String mobile,
+                                                       String ip,
+                                                       String deviceId,
+                                                       Double latitude,
+                                                       Double longitude) {
         log.info(LogMessages.CARD_ADD_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
@@ -85,7 +85,7 @@ public class CardService {
             data.put("card", mockCard);
 
             log.info(LogMessages.CARD_ADD_SUCCESS, mobile, maskPan(req.getCardNumber()));
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
+            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
                     ValidationMessages.CARD_ADDED_SUCCESS, data);
         }
 
@@ -116,7 +116,7 @@ public class CardService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("card", bankResponse.getCard());
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.CARD_ADDED_SUCCESS,
@@ -131,12 +131,12 @@ public class CardService {
     /**
      * Verify Card OTP (with validation)
      */
-    public ApiResponses<Map<String, Object>> verifyCardOtp(CardOtpRequest req,
-                                                           String mobile,
-                                                           String ip,
-                                                           String deviceId,
-                                                           Double latitude,
-                                                           Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> verifyCardOtp(CardOtpRequest req,
+                                                             String mobile,
+                                                             String ip,
+                                                             String deviceId,
+                                                             Double latitude,
+                                                             Double longitude) {
         log.info(LogMessages.OTP_VERIFY_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
@@ -158,7 +158,7 @@ public class CardService {
             data.put("verified", true);
             data.put("verifiedAt", LocalDateTime.now());
             log.info(LogMessages.OTP_VERIFY_SUCCESS, mobile, maskPan(req.getCardNumber()));
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
+            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
                     ValidationMessages.CARD_OTP_VERIFY_SUCCESS, data);
         }
 
@@ -185,7 +185,7 @@ public class CardService {
             Map<String, Object> data = new HashMap<>();
             data.put("verified", true);
             data.put("verifiedAt", LocalDateTime.now());
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.CARD_OTP_VERIFY_SUCCESS,
@@ -200,11 +200,11 @@ public class CardService {
     /**
      * Get All Cards
      */
-    public ApiResponses<Map<String, Object>> getCards(String mobile,
-                                                      String ip,
-                                                      String deviceId,
-                                                      Double latitude,
-                                                      Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> getCards(String mobile,
+                                                        String ip,
+                                                        String deviceId,
+                                                        Double latitude,
+                                                        Double longitude) {
         log.info(LogMessages.GET_CARDS, mobile);
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
@@ -218,7 +218,7 @@ public class CardService {
             Map<String, Object> data = new HashMap<>();
             data.put("cards", card);
 
-            return new ApiResponses<>("SUCCESS", HttpStatus.OK.value(),
+            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
                     ValidationMessages.CARDS_LIST_FETCH_SUCCESS, data);
         }
 
@@ -235,7 +235,7 @@ public class CardService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("cards", bankResponse.getCards());
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.CARDS_LIST_FETCH_SUCCESS,

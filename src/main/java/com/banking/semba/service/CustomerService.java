@@ -3,14 +3,13 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.ApiResponses;
+import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.response.BankAccountResponse;
 import com.banking.semba.dto.response.BankProfileResponse;
 import com.banking.semba.util.JwtUtil;
 import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,11 +41,11 @@ public class CustomerService {
         this.userUtils = userUtils;
         this.validationUtil = validationUtil;
     }
-    public ApiResponses<Map<String, Object>> getProfile(String authHeader,
-                                                        String ip,
-                                                        String deviceId,
-                                                        Double latitude,
-                                                        Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> getProfile(String authHeader,
+                                                          String ip,
+                                                          String deviceId,
+                                                          Double latitude,
+                                                          Double longitude) {
         String mobile = jwtUtil.getMobileFromHeader(authHeader);
         log.info(LogMessages.PROFILE_FETCH_START, mobile);
 
@@ -68,7 +67,7 @@ public class CustomerService {
             data.put("profile", mockProfile);
 
             log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.PROFILE_FETCH_SUCCESS,
@@ -104,7 +103,7 @@ public class CustomerService {
             data.put("profile", bankResponse.getProfile());
             log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
 
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.PROFILE_FETCH_SUCCESS,
@@ -119,12 +118,12 @@ public class CustomerService {
         }
     }
 
-    public ApiResponses<Map<String, Object>> getAccountById(Long id,
-                                                            String authHeader,
-                                                            String deviceId,
-                                                            String ip,
-                                                            Double latitude,
-                                                            Double longitude) {
+    public ApiResponseDTO<Map<String, Object>> getAccountById(Long id,
+                                                              String authHeader,
+                                                              String deviceId,
+                                                              String ip,
+                                                              Double latitude,
+                                                              Double longitude) {
 
         String mobile = jwtUtil.getMobileFromHeader(authHeader);
         log.info(LogMessages.ACCOUNT_FETCH_START, id);
@@ -145,7 +144,7 @@ public class CustomerService {
             data.put("account", mockAccount);
 
             log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.PROFILE_FETCH_SUCCESS,
@@ -181,7 +180,7 @@ public class CustomerService {
             data.put("account", bankResponse.getAccount());
 
             log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
-            return new ApiResponses<>(
+            return new ApiResponseDTO<>(
                     "SUCCESS",
                     HttpStatus.OK.value(),
                     ValidationMessages.PROFILE_FETCH_SUCCESS,

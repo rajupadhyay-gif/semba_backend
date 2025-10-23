@@ -26,44 +26,44 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public Mono<ResponseEntity<ApiResponses<BankOtpResponse>>> signupStart(@Valid @RequestBody SignupStartRequest req) {
+    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> signupStart(@Valid @RequestBody SignupStartRequest req) {
         return authService.signupStart(req)
                 .map(response -> ResponseEntity.status(HttpStatus.OK).body(response));
 
     }
 
     @PostMapping("/signupVerify")
-    public Mono<ResponseEntity<ApiResponses<BankOtpResponse>>> verifyOtp(
+    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> verifyOtp(
             @RequestBody @Valid VerifyOtpRequest req) {
         return authService.verifyOtp(req)
                 .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
     }
 
     @PostMapping("/setMpin")
-    public Mono<ResponseEntity<ApiResponses<BankMpinResponse>>> setMpin(@RequestBody @Valid BankMpinRequest req) {
+    public Mono<ResponseEntity<ApiResponseDTO<BankMpinResponse>>> setMpin(@RequestBody @Valid BankMpinRequest req) {
         return authService.setMpin(req)
                 .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<ApiResponses<Map<String, Object>>>> login(@RequestBody @Valid LoginRequest req) {
+    public Mono<ResponseEntity<ApiResponseDTO<Map<String, Object>>>> login(@RequestBody @Valid LoginRequest req) {
         return authService.login(req)
                 .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
     }
     @GetMapping("/signupProfile")
-    public ResponseEntity<ApiResponses<Map<String, Object>>> getProfile(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getProfile(
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-Device-Id") String deviceId,
             @RequestHeader("X-IP") String ip,
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude
     ) {
-        ApiResponses<Map<String, Object>> response = customerService.getProfile(authHeader, ip, deviceId, latitude, longitude);
+        ApiResponseDTO<Map<String, Object>> response = customerService.getProfile(authHeader, ip, deviceId, latitude, longitude);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/signupProfile/{id}")
-    public ResponseEntity<ApiResponses<Map<String, Object>>> getAccountById(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getAccountById(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-Device-Id") String deviceId,
@@ -71,7 +71,7 @@ public class AuthController {
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude
     ) {
-        ApiResponses<Map<String, Object>> response = customerService.getAccountById(id, authHeader, deviceId, ip, latitude, longitude);
+        ApiResponseDTO<Map<String, Object>> response = customerService.getAccountById(id, authHeader, deviceId, ip, latitude, longitude);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
