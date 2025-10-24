@@ -24,32 +24,78 @@ public class AuthController {
         this.authService = authService;
         this.customerService = customerService;
     }
-
+    // ---------------- SIGNUP START ----------------
     @PostMapping("/signup")
-    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> signupStart(@Valid @RequestBody SignupStartRequest req) {
+    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> signupStart(
+            @Valid @RequestBody SignupStartRequest req,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude) {
+
+        req.setIp(ip);
+        req.setDeviceId(deviceId);
+        req.setLatitude(latitude);
+        req.setLongitude(longitude);
+
         return authService.signupStart(req)
-                .map(response -> ResponseEntity.status(HttpStatus.OK).body(response));
-
+                .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
     }
 
-    @PostMapping("/signupVerify")
+    // ---------------- VERIFY OTP ----------------
+    @PostMapping("/signup/verify")
     public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> verifyOtp(
-            @RequestBody @Valid VerifyOtpRequest req) {
+            @Valid @RequestBody VerifyOtpRequest req,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude) {
+
+        req.setIp(ip);
+        req.setDeviceId(deviceId);
+        req.setLatitude(latitude);
+        req.setLongitude(longitude);
+
         return authService.verifyOtp(req)
-                .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
+                .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
     }
 
-    @PostMapping("/setMpin")
-    public Mono<ResponseEntity<ApiResponseDTO<BankMpinResponse>>> setMpin(@RequestBody @Valid BankMpinRequest req) {
+    // ---------------- SET MPIN ----------------
+    @PostMapping("/mpin/set")
+    public Mono<ResponseEntity<ApiResponseDTO<BankMpinResponse>>> setMpin(
+            @Valid @RequestBody BankMpinRequest req,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude) {
+
+        req.setIp(ip);
+        req.setDeviceId(deviceId);
+        req.setLatitude(latitude);
+        req.setLongitude(longitude);
+
         return authService.setMpin(req)
-                .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
+                .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
     }
 
+    // ---------------- LOGIN ----------------
     @PostMapping("/login")
-    public Mono<ResponseEntity<ApiResponseDTO<Map<String, Object>>>> login(@RequestBody @Valid LoginRequest req) {
+    public Mono<ResponseEntity<ApiResponseDTO<Map<String, Object>>>> login(
+            @Valid @RequestBody LoginRequest req,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude) {
+
+        req.setIp(ip);
+        req.setDeviceId(deviceId);
+        req.setLatitude(latitude);
+        req.setLongitude(longitude);
+
         return authService.login(req)
-                .map(resp -> ResponseEntity.status(HttpStatus.OK).body(resp));
+                .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
     }
+
     @GetMapping("/signupProfile")
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getProfile(
             @RequestHeader("Authorization") String authHeader,

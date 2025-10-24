@@ -50,6 +50,7 @@ public class LogMessages {
     public static final String LOGIN_REQUEST = "{\"event\":\"login_request\",\"mobile\":\"{}\"}";
     public static final String LOGIN_SUCCESS = "{\"event\":\"login_success\",\"mobile\":\"{}\"}";
 
+    public static final String LOGIN_FAILED = "{\"event\":\"login_failed\",\"mobile\":\"{}\"}";
     // Device info logs
     public static final String IP_BLANK = "{\"event\":\"ip_blank\",\"mobile\":\"{}\"}";
     public static final String DEVICE_ID_BLANK = "{\"event\":\"device_id_blank\",\"mobile\":\"{}\"}";
