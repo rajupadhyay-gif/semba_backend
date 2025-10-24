@@ -25,6 +25,7 @@ public class BankCardResponse {
         private String cardNumber;
         private String holderName;
         private String validThru;
+        private String type;
         private boolean verified;
         private LocalDateTime otpSentAt;
         private LocalDateTime addedAt;

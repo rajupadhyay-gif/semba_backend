@@ -61,11 +61,13 @@ public class CardController {
             @RequestHeader("X-IP") String ip,
             @RequestHeader("X-Device-Id") String deviceId,
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
-            @RequestHeader(value = "X-Longitude", required = false) Double longitude
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestParam(value = "type", required = false) String type // CREDIT or DEBIT
     ) {
         String mobile = jwtService.extractMobileFromHeader(authHeader);
         ApiResponseDTO<Map<String, Object>> response = cardService.getCards(
-                mobile, ip, deviceId, latitude, longitude);
+                mobile, ip, deviceId, latitude, longitude, type
+        );
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
     @PostMapping("card/pay-now")
