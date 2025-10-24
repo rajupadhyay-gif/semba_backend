@@ -21,7 +21,7 @@ public class JwtTokenService {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 *60* 10))) // 10 min
+                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 *60* 10)))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
