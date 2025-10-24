@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -96,7 +97,6 @@ public class CardService {
             }
             return buildOtpResponse();
         }
-
         try {
             BankCardResponse bankResponse = bankWebClient.post()
                     .uri(PROD_VERIFY_CARD_URL)
@@ -122,51 +122,71 @@ public class CardService {
                                                         String ip,
                                                         String deviceId,
                                                         Double latitude,
-                                                        Double longitude) {
+                                                        Double longitude,
+                                                        String type) {
         log.info(LogMessages.GET_CARDS, mobile);
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
+        List<BankCardResponse.CardDetail> allCards;
+
+        // ---------------- MOCK DATA ----------------
         if (USE_MOCK) {
-            Map<String, Object> mockCard1 = new HashMap<>();
-            mockCard1.put("cardNumber", "************4321");
-            mockCard1.put("holderName", "John Doe");
-            mockCard1.put("validThru", "12/26");
-            mockCard1.put("verified", true);
+            BankCardResponse.CardDetail creditCard = new BankCardResponse.CardDetail();
+            creditCard.setCardNumber("************4321");
+            creditCard.setHolderName("John Doe");
+            creditCard.setValidThru("12/26");
+            creditCard.setVerified(true);
+            creditCard.setOtpSentAt(null); // optional
+            creditCard.setAddedAt(LocalDateTime.now());
+            creditCard.setMetadata(Map.of("type", "CREDIT"));
 
-            Map<String, Object> mockCard2 = new HashMap<>();
-            mockCard2.put("cardNumber", "************9876");
-            mockCard2.put("holderName", "Jane Smith");
-            mockCard2.put("validThru", "11/25");
-            mockCard2.put("verified", true);
+            BankCardResponse.CardDetail debitCard = new BankCardResponse.CardDetail();
+            debitCard.setCardNumber("************5678");
+            debitCard.setHolderName("Alice Brown");
+            debitCard.setValidThru("08/25");
+            debitCard.setVerified(true);
+            debitCard.setOtpSentAt(null);
+            debitCard.setAddedAt(LocalDateTime.now());
+            debitCard.setMetadata(Map.of("type", "DEBIT"));
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("cards", new Map[]{mockCard1, mockCard2});
-            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.CARDS_LIST_FETCH_SUCCESS, data);
+            allCards = List.of(creditCard, debitCard);
         }
-
-        try {
+        // ---------------- REAL BANK CALL ----------------
+        else {
             BankCardResponse bankResponse = bankWebClient.get()
-                    .uri(PROD_CARD_URL)
+                    .uri(uriBuilder -> uriBuilder
+                            .path(PROD_CARD_URL)
+                            .queryParam("type", "DEBIT,CREDIT") // fetch all
+                            .build())
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .retrieve()
-                    .onStatus(status -> !status.is2xxSuccessful(),
-                            resp -> Mono.error(new GlobalException(ValidationMessages.BANK_API_FAILED,
-                                    resp.statusCode().value())))
                     .bodyToMono(BankCardResponse.class)
                     .block();
 
             if (bankResponse == null || !bankResponse.isSuccess())
                 throw new GlobalException(ValidationMessages.CARDS_FETCH_FAILED, HttpStatus.BAD_REQUEST.value());
 
-            return buildResponse(bankResponse.getCards(), ValidationMessages.CARDS_LIST_FETCH_SUCCESS);
-
-        } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
+            allCards = bankResponse.getCards();
         }
-    }
 
+        // ---------------- FILTER BY TYPE ----------------
+        if (type != null && !type.isBlank()) {
+            String typeUpper = type.toUpperCase();
+            allCards = allCards.stream()
+                    .filter(card -> typeUpper.equalsIgnoreCase((String) card.getMetadata().get("type")))
+                    .toList();
+        }
+
+        // ---------------- BUILD RESPONSE ----------------
+        Map<String, Object> data = new HashMap<>();
+        data.put("cards", allCards);
+
+        log.info("Cards fetched successfully for mobile: {}. Total cards: {}", mobile, allCards.size());
+        return new ApiResponseDTO<>("SUCCESS",
+                HttpStatus.OK.value(),
+                ValidationMessages.CARDS_LIST_FETCH_SUCCESS,
+                data);
+    }
     // ---------------- Process Payment ----------------
     public ApiResponseDTO<Map<String, Object>> processPayment(PayNowRequest req,
                                                               String mobile,
@@ -288,13 +308,20 @@ public class CardService {
         Map<String, Object> data = new HashMap<>();
         data.put("verified", true);
         data.put("verifiedAt", LocalDateTime.now());
-        return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
-                ValidationMessages.CARD_OTP_VERIFY_SUCCESS, data);
+        return new ApiResponseDTO<>(
+                "SUCCESS",
+                HttpStatus.OK.value(),
+                ValidationMessages.CARD_OTP_VERIFY_SUCCESS,
+                data);
     }
 
     private ApiResponseDTO<Map<String, Object>> buildResponse(Object payload, String message) {
         Map<String, Object> data = new HashMap<>();
         data.put("data", payload);
-        return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(), message, data);
+        return new ApiResponseDTO<>(
+                "SUCCESS",
+                HttpStatus.OK.value(),
+                message,
+                data);
     }
 }
