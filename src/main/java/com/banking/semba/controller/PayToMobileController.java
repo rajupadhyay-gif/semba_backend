@@ -1,9 +1,12 @@
 package com.banking.semba.controller;
 
 
+import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.ApiResponseDTO;
+import com.banking.semba.dto.BalanceValidationDataDTO;
 import com.banking.semba.dto.RecentPaymentsDTO;
 import com.banking.semba.security.JwtTokenService;
+import com.banking.semba.service.BankService;
 import com.banking.semba.service.PayToMobileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +21,12 @@ public class PayToMobileController {
 
     private final PayToMobileService payToMobileService;
     private final JwtTokenService jwtTokenService;
+    private final BankService bankService;
 
-    public PayToMobileController(PayToMobileService payToMobileService, JwtTokenService jwtTokenService) {
+    public PayToMobileController(PayToMobileService payToMobileService, JwtTokenService jwtTokenService, BankService bankService) {
         this.payToMobileService = payToMobileService;
         this.jwtTokenService = jwtTokenService;
+        this.bankService = bankService;
     }
 
     @GetMapping("/search")
@@ -64,6 +69,36 @@ public class PayToMobileController {
 
         ApiResponseDTO<List<RecentPaymentsDTO>> response = payToMobileService.getRecentPayments(
                 auth, ip, deviceId, latitude, longitude
+        );
+
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<ApiResponseDTO<BalanceValidationDataDTO>> validatePayment(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestParam("accountNumber") String accountNumber,
+            @RequestParam("enteredAmount") Double enteredAmount
+    ) {
+
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponseDTO<>(
+                            ValidationMessages.STATUS_UNAUTHORIZED,
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ValidationMessages.INVALID_JWT,
+                            null
+                    )
+            );
+        }
+
+        ApiResponseDTO<BalanceValidationDataDTO> response = bankService.validateBankBalance(
+                auth, ip, deviceId, latitude, longitude, accountNumber, enteredAmount
         );
 
         return ResponseEntity.status(response.getResponseCode()).body(response);
