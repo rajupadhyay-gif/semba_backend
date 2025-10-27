@@ -12,10 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class BalanceValidationDataDTO {
-
-    @NotNull(message = "Entered amount is required")
-    @Min(value = 1, message = "Entered amount must be greater than zero")
     private Double enteredAmount;
     private Double availableBalance;
     private String message;
+    private String transactionId;
 }
