@@ -1,10 +1,12 @@
 package com.banking.semba.controller;
 
 
-import com.banking.semba.dto.ApiResponseDTO;
-import com.banking.semba.dto.RecentPaymentsDTO;
+import com.banking.semba.constants.ValidationMessages;
+import com.banking.semba.dto.*;
 import com.banking.semba.security.JwtTokenService;
+import com.banking.semba.service.BankService;
 import com.banking.semba.service.PayToMobileService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +20,12 @@ public class PayToMobileController {
 
     private final PayToMobileService payToMobileService;
     private final JwtTokenService jwtTokenService;
+    private final BankService bankService;
 
-    public PayToMobileController(PayToMobileService payToMobileService, JwtTokenService jwtTokenService) {
+    public PayToMobileController(PayToMobileService payToMobileService, JwtTokenService jwtTokenService, BankService bankService) {
         this.payToMobileService = payToMobileService;
         this.jwtTokenService = jwtTokenService;
+        this.bankService = bankService;
     }
 
     @GetMapping("/search")
@@ -69,5 +73,57 @@ public class PayToMobileController {
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
+    @PostMapping("/validate-balance-mpin")
+    public ResponseEntity<ApiResponseDTO<BalanceValidationDataDTO>> validatePayment(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestBody BalanceValidationRequestDTO balanceValidationRequestDTO
+    ) {
+
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponseDTO<>(
+                            ValidationMessages.STATUS_UNAUTHORIZED,
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ValidationMessages.INVALID_JWT,
+                            null
+                    )
+            );
+        }
+
+        ApiResponseDTO<BalanceValidationDataDTO> response = bankService.validateBankBalance(
+                auth, ip, deviceId, latitude, longitude,balanceValidationRequestDTO.getAccountNumber(),balanceValidationRequestDTO.getEnteredAmount(),balanceValidationRequestDTO.getMpin()
+        );
+
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<ApiResponseDTO<TransactionDetailsDTO>> getTransactionDetails(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestParam("transactionId") String transactionId
+    ) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponseDTO<>(
+                            ValidationMessages.STATUS_UNAUTHORIZED,
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ValidationMessages.INVALID_JWT,
+                            null
+                    )
+            );
+        }
+        ApiResponseDTO<TransactionDetailsDTO> response = bankService.getTransactionDetails(auth,ip,deviceId,latitude,longitude, transactionId);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
 
 }

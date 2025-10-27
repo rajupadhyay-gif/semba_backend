@@ -2,6 +2,8 @@ package com.banking.semba.constants;
 
 public class LogMessages {
 
+    public static final String LIVE_BALANCE_FETCHED_SUCCESSFULLY = "Live balance fetched successfully: {}";
+
     private LogMessages() {
     } // prevent instantiation
 

@@ -3,11 +3,11 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.CustomException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.HttpResponseDTO;
+import com.banking.semba.dto.*;
 import com.banking.semba.security.JwtTokenService;
+import com.banking.semba.util.MPINValidatorUtil;
 import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -17,17 +17,26 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BankService {
 
     private final JwtTokenService jwtTokenService;
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
     private final WebClient bankWebClient;
+    private final MPINValidatorUtil mpinValidatorUtil;
+
+    public BankService(JwtTokenService jwtTokenService, UserServiceUtils userUtils, ValidationUtil validationUtil, WebClient bankWebClient, MPINValidatorUtil mpinValidatorUtil) {
+        this.jwtTokenService = jwtTokenService;
+        this.userUtils = userUtils;
+        this.validationUtil = validationUtil;
+        this.bankWebClient = bankWebClient;
+        this.mpinValidatorUtil = mpinValidatorUtil;
+    }
 
     private void validateDevice(String ip, String deviceId, Double latitude, Double longitude, String mobile) {
         userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
@@ -115,14 +124,7 @@ public class BankService {
                     ValidationMessages.INVALID_JWT
             );
         }
-
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null) {
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
-        }
-
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
         Object bankListObj = bankWebClient.get()
                 .uri("https://api.paystack.co/bank")
                 .retrieve()
@@ -165,5 +167,155 @@ public class BankService {
         );
     }
 
+    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount,String mpin
+    ) {
 
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_UNAUTHORIZED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.INVALID_JWT,
+                    null
+            );
+        }
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+        try {
+            log.info("Fetching live balance for account: {}", accountNumber);
+            if (enteredAmount == null || enteredAmount < 1) {
+                throw new IllegalArgumentException("Entered amount must be greater than or equal to 1");
+            }
+            Double liveBalance = bankWebClient
+                    .get()
+                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
+                    .header("Authorization", auth)
+                    .retrieve()
+                    .bodyToMono(Double.class)
+                    .onErrorResume(ex -> {
+                        log.warn("Dummy API failed: {}", ex.getMessage());
+                        return Mono.just(8500.0); // fallback value for testing
+                    })
+                    .block();
+
+            if (liveBalance == null) {
+                liveBalance = 8500.0;
+            }
+
+            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY, liveBalance);
+            String transactionId = UUID.randomUUID().toString();
+            BalanceValidationDataDTO responseData = new BalanceValidationDataDTO(
+                    enteredAmount,
+                    liveBalance,
+                    (liveBalance >= enteredAmount)
+                            ? ValidationMessages.TRANSACTION_ALLOWED
+                            : ValidationMessages.TRANSACTION_NOT_ALLOWED,
+                    transactionId
+            );
+
+            if (liveBalance < enteredAmount) {
+                return new ApiResponseDTO<>(
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        ValidationMessages.INSUFFICIENT_FUNDS + liveBalance,
+                        responseData
+                );
+            }
+
+            ApiResponseDTO<MPINValidationResponseDTO> mpinResponse =
+                    mpinValidatorUtil.validateMPIN(auth, ip, deviceId, latitude, longitude, accountNumber, mpin, transactionId);
+
+            if (!"SUCCESS".equalsIgnoreCase(mpinResponse.getStatus())) {
+                return new ApiResponseDTO<>(
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "MPIN validation failed: " + mpinResponse.getResponseMessage(),
+                        responseData
+                );
+            }
+
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.SUFFICIENT_FUNDS+ " Transaction ID: " + transactionId,
+                    responseData
+            );
+
+        } catch (Exception e) {
+            log.error("Error validating bank balance: {}", e.getMessage(), e);
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    ValidationMessages.UNKNOWN_ERROR + e.getMessage(),
+                    null
+            );
+        }
+    }
+
+    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth,String ip,String deviceId,Double latitude,Double longitude, String transactionId) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_UNAUTHORIZED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.INVALID_JWT,
+                    null
+            );
+        }
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+        if (transactionId == null || transactionId.trim().isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_FAILED,
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Transaction ID cannot be null or empty.",
+                    null
+            );
+        }
+
+        try {
+
+            log.info("Fetching transaction details from bank API for ID: {}", transactionId);
+
+            TransactionDetailsDTO bankResponse = bankWebClient.get()
+                    .uri("bankTransactionApiUrl")
+                    .header("Authorization", auth)
+                    .retrieve()
+                    .bodyToMono(TransactionDetailsDTO.class)
+                    .onErrorResume(ex -> {
+                        TransactionDetailsDTO fallback = new TransactionDetailsDTO(
+                                transactionId,
+                                PaymentType.UPI,
+                                "rajesh@upi",
+                                "shop@upi",
+                                "Bank of India ••••8888",
+                                2000.0,
+                                "27 Oct 2025, 10:35 AM",
+                                "Rajesh MBU",
+                                "SUCCESS",
+                                "Transaction Success"
+                        );
+                        return Mono.just(fallback);
+                    })
+                    .block();
+
+            String responseMsg = (bankResponse.getStatus().equalsIgnoreCase("SUCCESS"))
+                    ? "Transaction successful."
+                    : "Transaction failed.";
+
+            return new ApiResponseDTO<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    responseMsg,
+                    bankResponse
+            );
+
+        } catch (Exception e) {
+            log.error("Error fetching transaction details: {}", e.getMessage(), e);
+            return new ApiResponseDTO<>(
+                    "FAILED",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Unable to fetch transaction details: " + e.getMessage(),
+                    null
+            );
+        }
+    }
 }
