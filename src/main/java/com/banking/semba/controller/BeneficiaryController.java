@@ -2,12 +2,11 @@ package com.banking.semba.controller;
 
 
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.BeneficiaryDTO;
-import com.banking.semba.dto.HttpResponseDTO;
-import com.banking.semba.dto.UpdateBeneficiaryDTO;
+import com.banking.semba.dto.*;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.service.BankService;
 import com.banking.semba.service.BeneficiaryService;
+import com.banking.semba.service.FundTransferService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +18,13 @@ public class BeneficiaryController {
     private final JwtTokenService jwtTokenService;
     private final BeneficiaryService beneficiaryService;
     private final BankService bankService;
+    private final FundTransferService fundTransferService;
 
-    public BeneficiaryController(JwtTokenService jwtTokenService, BeneficiaryService beneficiaryService, BankService bankService) {
+    public BeneficiaryController(JwtTokenService jwtTokenService, BeneficiaryService beneficiaryService, BankService bankService, FundTransferService fundTransferService) {
         this.jwtTokenService = jwtTokenService;
         this.beneficiaryService = beneficiaryService;
         this.bankService = bankService;
+        this.fundTransferService = fundTransferService;
     }
 
     @PostMapping("/add")
@@ -133,7 +134,7 @@ public class BeneficiaryController {
     }
 
     @GetMapping("/search/bankName")
-    public ResponseEntity<HttpResponseDTO> searchBank(@RequestHeader("Authorization")String auth,
+    public ResponseEntity<HttpResponseDTO> searchBank(@RequestHeader("Authorization") String auth,
                                                       @RequestHeader("X-IP") String ip,
                                                       @RequestHeader("X-Device-Id") String deviceId,
                                                       @RequestHeader(value = "X-Latitude", required = false) Double latitude,
@@ -148,7 +149,40 @@ public class BeneficiaryController {
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
+    @PostMapping("/initiate")
+    public ResponseEntity<HttpResponseDTO> initiateTransfer(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @Valid @RequestBody FundTransferRequestDTO request) {
 
+        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+        HttpResponseDTO response = fundTransferService.initiateTransfer(mobile, ip, deviceId, latitude, longitude, request);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<HttpResponseDTO> verifyOtp(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @Valid @RequestBody OtpVerifyRequestDTO otpRequest) {
+
+        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+
+        HttpResponseDTO response = fundTransferService.verifyOtp(mobile, ip, deviceId, latitude, longitude, otpRequest);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
 }
-

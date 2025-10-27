@@ -14,6 +14,7 @@ public class ValidationMessages {
     public static final String ERROR_CODE_NO_BANKS = "404";
     public static final String STATUS_FAILED = "Failed";
 
+
     private ValidationMessages() {
     }
 
@@ -163,4 +164,15 @@ public class ValidationMessages {
     public static final String ACCOUNT_FETCH_ERROR = "Failed to fetch account";
     public static final String INVALID_RESPONSE = "Invalid response from bank API";
 //    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
+
+
+    // Transfer NFFT,RTGS
+    public static final String FROM_ACCOUNT_REQUIRED = "From account number is required";
+    public static final String TO_ACCOUNT_REQUIRED = "To account number is required";
+    public static final String INVALID_AMOUNT = "Amount must be greater than zero";
+    public static final String INVALID_TRANSFER_TYPE = "Invalid transfer type. Allowed: IMPS, NEFT, RTGS";
+    public static final String MISSING_TRANSACTION_ID = "Transaction ID is required";
+    public static final String OTP_REQUIRED = "OTP is required";
+    public static final String TRANSFER_INITIATED = "Transfer initiated successfully";
+
 }
