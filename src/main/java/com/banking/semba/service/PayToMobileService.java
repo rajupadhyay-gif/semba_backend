@@ -41,6 +41,16 @@ public class PayToMobileService {
         this.webClient = webClient;
     }
 
+    private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
+        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
+        validationUtil.validateIpFormat(ip, mobile);
+        validationUtil.validateDeviceIdFormat(deviceId, mobile);
+
+        if (latitude != null && longitude != null) {
+            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
+        }
+    }
+
     public ApiResponseDTO<List<Map<String, Object>>> searchContacts(String auth, String ip, String deviceId,
                                                                     Double latitude, Double longitude,
                                                                     String mobileNumber, String name) {
@@ -53,12 +63,9 @@ public class PayToMobileService {
             );
         }
         log.info(LogMessages.SEARCH_CONTACTS_START, mobileNumber, name);
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null) {
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
-        }
+
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+
 //
 //        List<Map<String, Object>> contacts;
 //        try {
@@ -131,12 +138,7 @@ List<Map<String, Object>> contacts = new ArrayList<>();
             String auth, String ip, String deviceId, Double latitude, Double longitude
     ) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null) {
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
-        }
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
 
         List<RecentPaymentsDTO> dtoList;
 
@@ -181,6 +183,7 @@ List<Map<String, Object>> contacts = new ArrayList<>();
                 dtoList
         );
     }
+
 
 
 }
