@@ -166,6 +166,6 @@ public class ValidationMessages {
     public static final String PROFILE_FETCH_FAILED = "Failed to fetch profile";
     public static final String ACCOUNT_FETCH_ERROR = "Failed to fetch account";
     public static final String INVALID_RESPONSE = "Invalid response from bank API";
-//    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
+    //    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
     public static final String TRANSACTION_ALLOWED = "Transaction permitted";
 }
