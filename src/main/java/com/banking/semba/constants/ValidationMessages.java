@@ -4,6 +4,7 @@ public class ValidationMessages {
 
     public static final String INSUFFICIENT_FUNDS = "Insufficient balance. Available: ₹";
     public static final String SUFFICIENT_FUNDS = "Sufficient balance available. Transaction allowed.";
+    public static final String TRANSFER_INITIATED ="Transfer Initiated" ;
 
     private ValidationMessages() {
     }
@@ -166,6 +167,18 @@ public class ValidationMessages {
     public static final String PROFILE_FETCH_FAILED = "Failed to fetch profile";
     public static final String ACCOUNT_FETCH_ERROR = "Failed to fetch account";
     public static final String INVALID_RESPONSE = "Invalid response from bank API";
-//    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
+    //    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
     public static final String TRANSACTION_ALLOWED = "Transaction permitted";
+
+
+
+    public static final String FROM_ACCOUNT_REQUIRED = "From account number is required";
+    public static final String TO_ACCOUNT_REQUIRED = "To account number is required";
+    public static final String INVALID_AMOUNT = "Amount must be greater than zero";
+    public static final String INVALID_TRANSFER_TYPE = "Invalid transfer type. Allowed: IMPS, NEFT, RTGS";
+
+    public static final String MISSING_TRANSACTION_ID = "Transaction ID is required";
+    public static final String OTP_REQUIRED = "OTP is required";
+
+
 }
