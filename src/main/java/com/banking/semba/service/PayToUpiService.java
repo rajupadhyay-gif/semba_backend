@@ -31,13 +31,15 @@ public class PayToUpiService {
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
     private final WebClient webClient;
+    private final AuthService authService;
 
     public PayToUpiService(JwtTokenService jwtTokenService, UserServiceUtils userUtils,
-                           ValidationUtil validationUtil, WebClient webClient) {
+                           ValidationUtil validationUtil, WebClient webClient, AuthService authService) {
         this.jwtTokenService = jwtTokenService;
         this.userUtils = userUtils;
         this.validationUtil = validationUtil;
         this.webClient = webClient;
+        this.authService = authService;
     }
 
     private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
@@ -88,10 +90,13 @@ public class PayToUpiService {
         }
 
         Map<String, Object> verifiedUser;
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
         try {
             verifiedUser = webClient.get()
                     .uri("https://jsonplaceholder.typicode.com/users/1")
                     .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
@@ -148,11 +153,13 @@ public class PayToUpiService {
             );
         }
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
         try {
             List<Map<String, Object>> externalData = webClient.get()
-                    .uri("https://jsonplaceholder.typicode.com/posts") // dummy data source
+                    .uri("https://jsonplaceholder.typicode.com/posts")
                     .accept(MediaType.APPLICATION_JSON)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
@@ -174,13 +181,13 @@ public class PayToUpiService {
             }
 
             List<RecentPaymentsDTO> dtoList = externalData.stream()
-                    .limit(5) // just limit to 5 dummy payments
+                    .limit(5)
                     .map(post -> new RecentPaymentsDTO(
                             ((Integer) post.get("id")),
-                            "9876543210", // dummy sender mobile
-                            "9998887776", // dummy receiver mobile
-                            1500.00,      // dummy amount
-                            "SUCCESS",    // dummy status
+                            "9876543210",
+                            "9998887776",
+                            1500.00,
+                            "SUCCESS",
                             LocalDateTime.now().minusMinutes(((Number) post.get("id")).longValue())
                     ))
                     .collect(Collectors.toList());
