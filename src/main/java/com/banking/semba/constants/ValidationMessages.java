@@ -112,7 +112,7 @@ public class ValidationMessages {
     public static final String PAYEE_NAME_BLANK = "Payee name cannot be blank";
     public static final String AMOUNT_INVALID = "Amount must be greater than 0";
 
-    public static final String TRANSFER_SUCCESS = "Fund transfer completed successfully";
+    public static final String BANK_TRANSECTION_SUCCESS = "Bank Transection Successfully";
     ;
 
 
