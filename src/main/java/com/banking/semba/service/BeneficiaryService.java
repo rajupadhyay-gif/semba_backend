@@ -31,11 +31,13 @@ public class BeneficiaryService {
     private final ValidationUtil validationUtil;
     private final UserServiceUtils userUtils;
     private final WebClient webClient;
+    private final AuthService authService;
 
-    public BeneficiaryService(ValidationUtil validationUtil, UserServiceUtils userUtils, WebClient webClient) {
+    public BeneficiaryService(ValidationUtil validationUtil, UserServiceUtils userUtils, WebClient webClient, AuthService authService) {
         this.validationUtil = validationUtil;
         this.userUtils = userUtils;
         this.webClient = webClient;
+        this.authService = authService;
     }
 
     private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
@@ -97,10 +99,11 @@ public class BeneficiaryService {
                     "ifscCode", beneficiaryDTO.getIfscCode(),
                     "bankName", beneficiaryDTO.getBankId()
             );
+            HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
             Map<String, Object> response = webClient.post()
                     .uri(externalUrl)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .headers(httpHeaders ->  httpHeaders.addAll(headers))
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
@@ -121,12 +124,13 @@ public class BeneficiaryService {
     public ResponseEntity<HttpResponseDTO> getAllPayees(String mobile, String ip, String deviceId,
                                                         Double latitude, Double longitude) {
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
         try {
+
             List<Map<String, Object>> apiResponse = webClient.get()
                     .uri("/users")
-                    .header("X-IP", ip)
-                    .header("X-Device-Id", deviceId)
-                    .header("Authorization", "Bearer " + mobile)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, response ->
                             Mono.error(new RuntimeException("Client error while calling dummy API")))
@@ -184,6 +188,7 @@ public class BeneficiaryService {
             UpdateBeneficiaryDTO updateBeneficiaryDTO) {
 
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
         if (updateBeneficiaryDTO.getBeneficiaryName() == null || updateBeneficiaryDTO.getBeneficiaryName().isBlank()) {
             return GlobalExceptionHandler.badRequest(ValidationMessages.BENEFICIARY_NAME_REQUIRED);
@@ -193,9 +198,7 @@ public class BeneficiaryService {
             String externalApiUrl = "https://dummyjson.com/users/" + payeeId;
             webClient.put()
                     .uri(externalApiUrl)
-                    .header("X-IP", ip)
-                    .header("X-Device-Id", deviceId)
-                    .header("Authorization", "Bearer " + mobile)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .bodyValue(updateBeneficiaryDTO)
                     .retrieve()
                     .bodyToMono(Void.class)
@@ -229,15 +232,14 @@ public class BeneficiaryService {
             Double latitude, Double longitude, Long payeeId) {
 
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
         try {
             String uri = "/users/" + payeeId;
 
             webClient.delete()
                     .uri(uri)
-                    .header("X-IP", ip)
-                    .header("X-Device-Id", deviceId)
-                    .header("Authorization", "Bearer " + mobile)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, response -> {
                         log.error("Client error while deleting payee | payeeId={} | status={}", payeeId, response.statusCode());

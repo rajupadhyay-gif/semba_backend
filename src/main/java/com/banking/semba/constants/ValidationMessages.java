@@ -1,15 +1,13 @@
 package com.banking.semba.constants;
 
 public class ValidationMessages {
+    private ValidationMessages() {
+    }
 
     public static final String INSUFFICIENT_FUNDS = "Insufficient balance. Available: ₹";
     public static final String SUFFICIENT_FUNDS = "Sufficient balance available. Transaction allowed.";
     public static final String TRANSFER_INITIATED ="Transfer Initiated" ;
     public static final String STATUS_PENDING = "Pending";
-
-    private ValidationMessages() {
-    }
-
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String BAD_REQUEST = "BAD_REQUEST";
     public static final String FAILURE = "Filed to fetch the payees list";
@@ -31,7 +29,6 @@ public class ValidationMessages {
     public static final String ERROR_CALL_API = " Unexpected error while calling bank API";
 
     public static final String JWT_EXPIRED = "JWT token in expired";
-    public static final String JWT_EXPIREDD = "JWT token in expired";
     //Verify Otp
     public static final String USER_NOT_FOUND = "User not found";
     public static final String OTP_BLANK = "OTP cannot be blank";
@@ -104,9 +101,6 @@ public class ValidationMessages {
     public static final String PAYMENT_SUCCESS = "Payment successful";
     public static final String CARD_FETCHED_SUCESS = "Card FETCHED SUCCESSFULLY";
 
-
-
-
     // Bank Transfer
     public static final String ACCOUNT_BLANK = "Account number cannot be blank";
     public static final String IFSC_BLANK = "IFSC code cannot be blank";
@@ -114,9 +108,6 @@ public class ValidationMessages {
     public static final String AMOUNT_INVALID = "Amount must be greater than 0";
 
     public static final String TRANSFER_SUCCESS = "Fund transfer completed successfully";
-    ;
-
-
     public static final String ACCOUNT_FETCH_SUCCESS = "Account details fetched successfully.";
     public static final String ACCOUNT_FETCH_FAILED = "Failed to fetch account details.";
     public static final String BANK_API_FAILED = "Bank API call failed. Please try again later.";
@@ -172,9 +163,6 @@ public class ValidationMessages {
     public static final String INVALID_RESPONSE = "Invalid response from bank API";
     //    public static final String UNKNOWN_ERROR = "Unexpected error occurred";
     public static final String TRANSACTION_ALLOWED = "Transaction permitted";
-
-
-
     public static final String FROM_ACCOUNT_REQUIRED = "From account number is required";
     public static final String TO_ACCOUNT_REQUIRED = "To account number is required";
     public static final String INVALID_AMOUNT = "Amount must be greater than zero";
