@@ -64,7 +64,7 @@ public class AuthService {
         }
     }
 
-    private HttpHeaders buildHeaders(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
+    public HttpHeaders buildHeaders(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, mobile);
         headers.set("X-IP", ip);
