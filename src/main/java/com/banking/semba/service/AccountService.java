@@ -181,7 +181,7 @@ public class AccountService {
                         .block();
 
                 if (paymentResponse == null) {
-                    paymentResponse = new PaymentResponse("FAILED",
+                    paymentResponse = new PaymentResponse(ValidationMessages.STATUS_FAILED,
                             "Bank did not return a response",
                             dto.getTransactionId());
                 }
@@ -197,8 +197,11 @@ public class AccountService {
         }
 
         data.put("payment", paymentResponse);
-        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
-                "Payment completed", data);
+        return new ApiResponseDTO<>(
+                ValidationMessages.STATUS_OK,
+                HttpStatus.OK.value(),
+                ValidationMessages.BANK_TRANSACTION,
+                data);
     }
 
     /** Common header validations */

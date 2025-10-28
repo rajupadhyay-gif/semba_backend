@@ -1,6 +1,8 @@
 package com.banking.semba.constants;
 
 public class ValidationMessages {
+    public static final String BANK_TRANSACTION = "Bank Transaction Success";
+
     private ValidationMessages() {
     }
 

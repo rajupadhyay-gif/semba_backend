@@ -170,6 +170,58 @@ public class AuthService {
                     return Mono.error(new GlobalException(ValidationMessages.ERROR_CALL_API + ": " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
                 });
     }
+    // ---------------- RESEND OTP ----------------
+    public Mono<ApiResponseDTO<BankOtpResponse>> resendOtp(SignupStartRequest req) {
+        String mobile = req.getMobile().trim();
+
+        validateCommon(mobile, req.getIp(), req.getDeviceId(), req.getLatitude(), req.getLongitude());
+
+        if (USE_MOCK) {
+            return Mono.fromSupplier(() -> {
+                BankOtpResponse response = new BankOtpResponse();
+                response.setOtpValid(true);
+                response.setTransactionId("TXN-MOCK-RESEND-" + System.currentTimeMillis());
+                log.info("OTP resent successfully (MOCK) for mobile: {}. Transaction ID: {}", mobile, response.getTransactionId());
+                return new ApiResponseDTO<>(
+                        ValidationMessages.STATUS_OK,
+                        HttpStatus.OK.value(),
+                        "OTP resent successfully (mock)",
+                        response
+                );
+            });
+        }
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("mobile", mobile);
+        requestBody.put("deviceId", req.getDeviceId());
+        requestBody.put("ip", req.getIp());
+        requestBody.put("latitude", req.getLatitude());
+        requestBody.put("longitude", req.getLongitude());
+
+        return bankWebClient.post()
+                .uri("/bank/resend-otp")
+                .headers(h -> h.addAll(buildHeaders(mobile, req.getIp(), req.getDeviceId(), req.getLatitude(), req.getLongitude())))
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(BankOtpResponse.class)
+                .map(resp -> {
+                    log.info("OTP resent successfully for mobile: {}. Transaction ID: {}", mobile, resp.getTransactionId());
+                    return new ApiResponseDTO<>(
+                            ValidationMessages.STATUS_OK,
+                            HttpStatus.OK.value(),
+                            ValidationMessages.OTP_RESEND_SUCCESS,
+                            resp
+                    );
+                })
+                .onErrorResume(WebClientResponseException.class, ex -> {
+                    log.error("BANK API ERROR during OTP resend for mobile: {}. Status: {}, ResponseBody: {}", mobile, ex.getStatusCode().value(), ex.getResponseBodyAsString(), ex);
+                    return Mono.error(new GlobalException(ValidationMessages.BANKING_FAILED + ": " + ex.getResponseBodyAsString(), ex.getStatusCode().value()));
+                })
+                .onErrorResume(Exception.class, ex -> {
+                    log.error("Unexpected exception during OTP resend for mobile: {}. Error: {}", mobile, ex.getMessage(), ex);
+                    return Mono.error(new GlobalException(ValidationMessages.ERROR_CALL_API + ": " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+                });
+    }
 
     // ---------------- SET MPIN ----------------
     public Mono<ApiResponseDTO<BankMpinResponse>> setMpin(@Valid BankMpinRequest req) {
@@ -221,6 +273,7 @@ public class AuthService {
                     return Mono.error(new GlobalException(ValidationMessages.ERROR_CALL_API + ": " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
                 });
     }
+
 
     // ---------------- LOGIN ----------------
     public Mono<ApiResponseDTO<Map<String, Object>>> login(LoginRequest req) {

@@ -2,9 +2,10 @@ package com.banking.semba.dto.response;
 
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 public class BankAccountResponse {
     private boolean success;
-    private String message;
-    private BankAccount account;
+    private Map<String, Object> account;
 }

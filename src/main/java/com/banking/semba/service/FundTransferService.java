@@ -87,8 +87,11 @@ public class FundTransferService {
                 log.info("Transfer initiated successfully (MOCK) | mobile={} | txnId={}",
                         mobile, mockResponse.getTransactionId());
 
-                return new HttpResponseDTO(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
-                        ValidationMessages.TRANSFER_INITIATED, mockResponse);
+                return new HttpResponseDTO(
+                        ValidationMessages.STATUS_OK,
+                        HttpStatus.OK.value(),
+                        ValidationMessages.TRANSFER_INITIATED,
+                        mockResponse);
             }
 
             // REAL Bank API call
@@ -100,8 +103,11 @@ public class FundTransferService {
                     .bodyToMono(FundTransferResponse.class)
                     .block();
 
-            return new HttpResponseDTO(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
-                    ValidationMessages.TRANSFER_INITIATED, response);
+            return new HttpResponseDTO(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.TRANSFER_INITIATED,
+                    response);
 
         } catch (GlobalException ex) {
             log.warn("Validation failed during transfer initiation | reason={} | mobile={}", ex.getMessage(), mobile);

@@ -149,7 +149,7 @@ public class BeneficiaryController {
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @PostMapping("/initiate")
+    @PostMapping("/bank-Transfer/initiate")
     public ResponseEntity<HttpResponseDTO> initiateTransfer(
             @RequestHeader("Authorization") String auth,
             @RequestHeader("X-IP") String ip,
@@ -167,7 +167,7 @@ public class BeneficiaryController {
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @PostMapping("/verify-otp")
+    @PostMapping("/bank-Transfer/verify-otp")
     public ResponseEntity<HttpResponseDTO> verifyOtp(
             @RequestHeader("Authorization") String auth,
             @RequestHeader("X-IP") String ip,
