@@ -40,6 +40,16 @@ public class PayToUpiService {
         this.webClient = webClient;
     }
 
+    private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
+        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
+        validationUtil.validateIpFormat(ip, mobile);
+        validationUtil.validateDeviceIdFormat(deviceId, mobile);
+
+        if (latitude != null && longitude != null) {
+            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
+        }
+    }
+
     public ApiResponseDTO<Map<String, Object>> validateUpiId(
             String auth, String ip, String deviceId,
             Double latitude, Double longitude, String upiId) {
@@ -57,13 +67,7 @@ public class PayToUpiService {
 
         log.info(LogMessages.UPIID_VALIDATION_START, upiId);
 
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null) {
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
-        }
-
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
         if (upiId == null || upiId.isBlank()) {
             return new ApiResponseDTO<>(
                     ValidationMessages.STATUS_ERROR,
@@ -143,13 +147,7 @@ public class PayToUpiService {
                     null
             );
         }
-
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null) {
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
-        }
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
 
         try {
             List<Map<String, Object>> externalData = webClient.get()
