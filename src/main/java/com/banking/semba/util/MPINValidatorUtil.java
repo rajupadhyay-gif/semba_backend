@@ -7,6 +7,7 @@ import com.banking.semba.security.JwtTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -106,4 +107,55 @@ public class MPINValidatorUtil {
             );
         }
     }
+    public ApiResponseDTO<MPINValidationResponseDTO> validateCardMPIN(
+            String mobile,
+            String ip,
+            String deviceId,
+            Double latitude,
+            Double longitude,
+            String accountNumber,
+            String mpin,
+            String transactionId
+    ) {
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("mobile", mobile);
+            requestBody.put("accountNumber", accountNumber);
+            requestBody.put("mpin", mpin);
+            requestBody.put("transactionId", transactionId);
+
+            // Dummy/mock URL — we simulate this
+            String dummyUrl = "https://dummy-bank-api.com/api/mpin/validate";
+
+            MPINValidationResponseDTO response = webClient.post()
+                    .uri(dummyUrl)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(MPINValidationResponseDTO.class)
+                    .onErrorResume(ex -> {
+                        MPINValidationResponseDTO fallbackResponse = new MPINValidationResponseDTO();
+                        fallbackResponse.setValid("1234".equals(mpin));
+                        fallbackResponse.setMessage(fallbackResponse.isValid()
+                                ? "Mock MPIN validation success"
+                                : "Invalid MPIN entered");
+                        return Mono.just(fallbackResponse);
+                    })
+                    .block();
+
+            if (response != null && response.isValid()) {
+                return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
+                        "MPIN validated successfully for Transaction ID: " + transactionId, response);
+            } else {
+                return new ApiResponseDTO<>("FAILED", HttpStatus.BAD_REQUEST.value(),
+                        "Invalid MPIN for Transaction ID: " + transactionId, response);
+            }
+
+        } catch (Exception e) {
+            return new ApiResponseDTO<>("ERROR", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "MPIN validation failed: " + e.getMessage(), null);
+        }
+    }
 }
+
