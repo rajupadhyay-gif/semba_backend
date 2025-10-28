@@ -5,12 +5,10 @@ import lombok.Data;
 
 @Data
 public class CardOtpRequest {
-    private String cardNumber;
-    private String otp;
-    private String ip;
-    private String deviceId;
-    private Double latitude;
-    private Double longitude;
+    private String cardNumber;    // masked or plain card number
+    private String otp;           // 6-digit OTP from user
+    private String cardType;      // "DEBIT" or "CREDIT"
+    private String bankCode;      // bank identifier
 }
 
 
