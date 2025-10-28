@@ -200,7 +200,7 @@ public class AccountService {
         return new ApiResponseDTO<>(
                 ValidationMessages.STATUS_OK,
                 HttpStatus.OK.value(),
-                ValidationMessages.BANK_TRANSECTION_SUCCESS,
+                ValidationMessages.BANK_TRANSACTION,
                 data);
     }
 
