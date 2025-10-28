@@ -4,11 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class BankProfileResponse {
     private boolean success;
-    private String message;
-    private BankUserProfile profile;
+    private Map<String, Object> profile;
 }

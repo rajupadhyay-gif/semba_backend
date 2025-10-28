@@ -25,7 +25,7 @@ public class AuthController {
         this.customerService = customerService;
     }
     // ---------------- SIGNUP START ----------------
-    @PostMapping("/signup")
+    @PostMapping("signup/send-otp")
     public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> signupStart(
             @Valid @RequestBody SignupStartRequest req,
             @RequestHeader("X-IP") String ip,
@@ -41,9 +41,25 @@ public class AuthController {
         return authService.signupStart(req)
                 .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
     }
+    @PostMapping("/signup/resend-otp")
+    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> resendOtp(
+            @Valid @RequestBody SignupStartRequest req,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude) {
+
+        req.setIp(ip);
+        req.setDeviceId(deviceId);
+        req.setLatitude(latitude);
+        req.setLongitude(longitude);
+
+        return authService.resendOtp(req)
+                .map(resp -> ResponseEntity.status(resp.getResponseCode()).body(resp));
+    }
 
     // ---------------- VERIFY OTP ----------------
-    @PostMapping("/signup/verify")
+    @PostMapping("/signup/verify-otp")
     public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> verifyOtp(
             @Valid @RequestBody VerifyOtpRequest req,
             @RequestHeader("X-IP") String ip,

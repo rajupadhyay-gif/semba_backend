@@ -30,9 +30,9 @@ public class CustomerService {
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
 
-    private final boolean useMock = true;
+    private final boolean useMock = true; //  false = production (bank call)
     private static final String BANK_PROFILE_URL = "/user/profile";
-    private static final String BANK_ACCOUNT_URL = "https://api.realbank.com/user/account/";
+    private static final String BANK_ACCOUNT_URL = "/user/account/";
 
     public CustomerService(WebClient bankWebClient, JwtUtil jwtUtil,
                            UserServiceUtils userUtils, ValidationUtil validationUtil) {
@@ -41,164 +41,120 @@ public class CustomerService {
         this.userUtils = userUtils;
         this.validationUtil = validationUtil;
     }
-    public ApiResponseDTO<Map<String, Object>> getProfile(String authHeader,
-                                                          String ip,
-                                                          String deviceId,
-                                                          Double latitude,
-                                                          Double longitude) {
+
+    // ---------------- PROFILE ----------------
+    public ApiResponseDTO<Map<String, Object>> getProfile(
+            String authHeader, String ip, String deviceId, Double latitude, Double longitude) {
+
         String mobile = jwtUtil.getMobileFromHeader(authHeader);
         log.info(LogMessages.PROFILE_FETCH_START, mobile);
-
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
         if (useMock) {
-            // ---------------- MOCK PROFILE ----------------
-            Map<String, Object> mockProfile = new HashMap<>();
-            mockProfile.put("mobile", mobile);
-            mockProfile.put("fullName", "John Doe");
-            mockProfile.put("email", "john.doe@example.com");
-            mockProfile.put("accountType", "SAVINGS");
-            mockProfile.put("accountNumber", "123456789012");
-            mockProfile.put("ifsc", "IFSC0001");
-            mockProfile.put("bankName", "Bank of Dummy");
-            mockProfile.put("balance", 50000.0);
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("profile", mockProfile);
-
-            log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
-            return new ApiResponseDTO<>(
-                    "SUCCESS",
-                    HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS,
-                    data);
+            // Mock for local testing
+            Map<String, Object> mockProfile = Map.of(
+                    "mobile", mobile,
+                    "fullName", "John Doe",
+                    "email", "john.doe@example.com",
+                    "accountType", "SAVINGS",
+                    "balance", 50000.00
+            );
+            return new ApiResponseDTO<>("SUCCESS", 200, ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    Map.of("profile", mockProfile));
         }
 
         try {
-            // ---------------- REAL BANK API ----------------
             BankProfileResponse bankResponse = bankWebClient.get()
-                    .uri(BANK_PROFILE_URL) // replace with real bank URL
-                    .headers(h -> {
-                        h.set(HttpHeaders.AUTHORIZATION, authHeader);
-                        h.set("X-Device-Id", deviceId);
-                        h.set("X-IP", ip);
-                        if (latitude != null) h.set("X-Latitude", latitude.toString());
-                        if (longitude != null) h.set("X-Longitude", longitude.toString());
-                        h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-                    })
+                    .uri(BANK_PROFILE_URL)
+                    .headers(h -> setBankHeaders(h, authHeader, ip, deviceId, latitude, longitude))
                     .retrieve()
-                    .onStatus(status -> !status.is2xxSuccessful(), clientResponse ->
-                            Mono.error(new GlobalException(ValidationMessages.BANK_API_FAILED,
-                                    clientResponse.statusCode().value()))
-                    )
+                    .onStatus(status -> !status.is2xxSuccessful(),
+                            clientResponse -> Mono.error(new GlobalException(
+                                    ValidationMessages.BANK_API_FAILED,
+                                    clientResponse.statusCode().value())))
                     .bodyToMono(BankProfileResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess()) {
-                log.error(LogMessages.PROFILE_FETCH_FAILED, mobile, "Invalid response from bank");
-                throw new GlobalException(ValidationMessages.PROFILE_FETCH_FAILED, HttpStatus.BAD_REQUEST.value());
-            }
+            if (bankResponse == null || !bankResponse.isSuccess())
+                throw new GlobalException(
+                        ValidationMessages.PROFILE_FETCH_FAILED,
+                        HttpStatus.BAD_REQUEST.value());
 
             Map<String, Object> data = new HashMap<>();
             data.put("profile", bankResponse.getProfile());
             log.info(LogMessages.PROFILE_FETCH_SUCCESS, mobile);
-
             return new ApiResponseDTO<>(
-                    "SUCCESS",
+                    ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
                     ValidationMessages.PROFILE_FETCH_SUCCESS,
                     data);
 
         } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
+            log.error("Bank API Error: {}", ex.getResponseBodyAsString());
+            throw new GlobalException("Bank API Error", ex.getStatusCode().value());
         } catch (Exception ex) {
-            log.error(LogMessages.PROFILE_FETCH_FAILED, mobile, ex.getMessage(), ex);
-            throw new GlobalException(ValidationMessages.UNKNOWN_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value());
+            throw new GlobalException("Unexpected error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
-    public ApiResponseDTO<Map<String, Object>> getAccountById(Long id,
-                                                              String authHeader,
-                                                              String deviceId,
-                                                              String ip,
-                                                              Double latitude,
-                                                              Double longitude) {
+    // ---------------- ACCOUNT DETAILS ----------------
+    public ApiResponseDTO<Map<String, Object>> getAccountById(
+            Long id, String authHeader, String deviceId, String ip, Double latitude, Double longitude) {
 
         String mobile = jwtUtil.getMobileFromHeader(authHeader);
-        log.info(LogMessages.ACCOUNT_FETCH_START, id);
-
         validateRequest(mobile, ip, deviceId, latitude, longitude);
 
         if (useMock) {
-            // ---------------- MOCK ACCOUNT RESPONSE ----------------
-            Map<String, Object> mockAccount = new HashMap<>();
-            mockAccount.put("accountId", id);
-            mockAccount.put("mobile", mobile);
-            mockAccount.put("accountNumber", "123456789012");
-            mockAccount.put("ifsc", "IFSC0001");
-            mockAccount.put("bankName", "Bank of Dummy");
-            mockAccount.put("balance", 50000.0);
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("account", mockAccount);
-
-            log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
-            return new ApiResponseDTO<>(
-                    "SUCCESS",
-                    HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS,
-                    data);
+            Map<String, Object> mockAccount = Map.of(
+                    "accountId", id,
+                    "accountNumber", "XXXXXX8901",
+                    "balance", 75000.0,
+                    "ifsc", "HDFC000123",
+                    "type", "SAVINGS"
+            );
+            return new ApiResponseDTO<>("SUCCESS", 200, "Mock account fetched", Map.of("account", mockAccount));
         }
 
         try {
-            // ---------------- REAL BANK API ----------------
             BankAccountResponse bankResponse = bankWebClient.get()
-                    .uri(BANK_ACCOUNT_URL + id) // <-- replace with real bank URL
-                    .headers(h -> {
-                        h.set(HttpHeaders.AUTHORIZATION, authHeader);
-                        h.set("X-Device-Id", deviceId);
-                        h.set("X-IP", ip);
-                        if (latitude != null) h.set("X-Latitude", latitude.toString());
-                        if (longitude != null) h.set("X-Longitude", longitude.toString());
-                        h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-                    })
+                    .uri(BANK_ACCOUNT_URL + id)
+                    .headers(h -> setBankHeaders(h, authHeader, ip, deviceId, latitude, longitude))
                     .retrieve()
-                    .onStatus(status -> !status.is2xxSuccessful(), clientResponse ->
-                            Mono.error(new GlobalException(ValidationMessages.BANK_API_FAILED,
-                                    clientResponse.statusCode().value()))
-                    )
                     .bodyToMono(BankAccountResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess()) {
-                log.error(LogMessages.ACCOUNT_FETCH_FAILED, id, "Invalid response from bank");
+            if (bankResponse == null || !bankResponse.isSuccess())
                 throw new GlobalException(ValidationMessages.ACCOUNT_FETCH_ERROR, HttpStatus.BAD_REQUEST.value());
-            }
 
             Map<String, Object> data = new HashMap<>();
             data.put("account", bankResponse.getAccount());
-
             log.info(LogMessages.ACCOUNT_FETCH_SUCCESS, id);
+
             return new ApiResponseDTO<>(
-                    "SUCCESS",
+                    ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
-                    ValidationMessages.PROFILE_FETCH_SUCCESS,
+                    ValidationMessages.ACCOUNT_FETCH_SUCCESS,
                     data);
 
-        } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
         } catch (Exception ex) {
-            log.error(LogMessages.ACCOUNT_FETCH_FAILED, id, ex.getMessage(), ex);
-            throw new GlobalException(ValidationMessages.UNKNOWN_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.value());
+            throw new GlobalException(ValidationMessages.ACCOUNT_FETCH_ERROR + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
-    private void validateRequest(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
-        validationUtil.validateIpFormat(ip, mobile);
-        validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
+
+    // ---------------- HELPERS ----------------
+    private void setBankHeaders(HttpHeaders headers, String auth, String ip, String deviceId, Double lat, Double lon) {
+        headers.set(HttpHeaders.AUTHORIZATION, auth);
+        headers.set("X-Device-Id", deviceId);
+        headers.set("X-IP", ip);
+        if (lat != null) headers.set("X-Latitude", lat.toString());
+        if (lon != null) headers.set("X-Longitude", lon.toString());
+        headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
     }
 
+    private void validateRequest(String mobile, String ip, String deviceId, Double lat, Double lon) {
+        userUtils.validateDeviceInfo(ip, deviceId, lat, lon, mobile);
+        validationUtil.validateIpFormat(ip, mobile);
+        validationUtil.validateDeviceIdFormat(deviceId, mobile);
+        validationUtil.validateLocation(lat, String.valueOf(lon), mobile);
+    }
 }
