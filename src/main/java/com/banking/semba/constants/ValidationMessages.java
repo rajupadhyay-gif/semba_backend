@@ -95,13 +95,15 @@ public class ValidationMessages {
     public static final String VALID_THRU_INVALID = "Expiry must be in MM/yy format and a future date";
     public static final String CARD_ALREADY_EXISTS = "Card already exists for this user";
     public static final String OTP_FORMAT_INVALID = "OTP must be 6 digits";
-    public static final String CARD_NOT_FOUND = "Card not found or not owned by user";
+    public static final String BANK_TRANSECTION_FAIL = "Bank Transection failed";
     public static final String CARD_ADDED_SUCCESS = "Card add Successfully";
     public static final String CARD_ADD_FAILED = "Card added failed";
     public static final String CARD_OTP_VERIFY_SUCCESS = "Card otp verified successfully";
     public static final String CARDS_LIST_FETCH_SUCCESS = "Cards list fetched successfully";
-    public static final String CARDS_FETCH_FAILED = "Cards list fetched failed";
+    public static final String CARD_VARIFY_FAIL = "Card verification failed";
     public static final String PAYMENT_SUCCESS = "Payment successful";
+    public static final String CARD_FETCHED_SUCESS = "Card FETCHED SUCCESSFULLY";
+
 
 
 

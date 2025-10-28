@@ -3,12 +3,10 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.ApiResponseDTO;
-import com.banking.semba.dto.CardOtpRequest;
-import com.banking.semba.dto.CardRequest;
-import com.banking.semba.dto.PayNowRequest;
+import com.banking.semba.dto.*;
 import com.banking.semba.dto.response.BankCardResponse;
 import com.banking.semba.dto.response.BankTransactionResponse;
+import com.banking.semba.util.MPINValidatorUtil;
 import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -34,208 +31,180 @@ public class CardService {
     private final WebClient bankWebClient;
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
+    private final MPINValidatorUtil mpinValidatorUtil;
 
     private static final String PROD_CARD_URL = "https://api.bank.com/cards";
     private static final String PROD_VERIFY_CARD_URL = "https://api.bank.com/cards/verify";
-    private static final String PROD_TRANSACTION_URL = "https://api.bank.com/debit";
+    private static final String PROD_DEBIT_URL = "https://api.bank.com/transactions/debit";
+    private static final String PROD_CREDIT_URL = "https://api.bank.com/transactions/credit";
 
     private static final boolean USE_MOCK = true;
     private static final String DEMO_OTP = "123456";
     private static final String DEMO_MPIN = "1234";
 
-    // ---------------- Add Card ----------------
-    public ApiResponseDTO<Map<String, Object>> addCard(CardRequest req,
-                                                       String mobile,
-                                                       String ip,
-                                                       String deviceId,
-                                                       Double latitude,
-                                                       Double longitude) {
+    // ---------------- ADD CARD ----------------
+    public ApiResponseDTO<Map<String, Object>> addCard(CardRequest req, String mobile,
+                                                       String ip, String deviceId,
+                                                       Double latitude, Double longitude) {
         log.info(LogMessages.CARD_ADD_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
         validateCardDetails(req);
 
-        if (USE_MOCK) return buildMockCardResponse(req, mobile, false);
+        if (USE_MOCK) {
+            return buildMockCardResponse(req, mobile, false);
+        }
 
         try {
-            BankCardResponse bankResponse = bankWebClient.post()
-                    .uri(PROD_CARD_URL)
+            String bankUrl = req.getCardType().equalsIgnoreCase("DEBIT") ?
+                    PROD_CARD_URL + "/debit/add" : PROD_CARD_URL + "/credit/add";
+
+            BankCardResponse response = bankWebClient.post()
+                    .uri(bankUrl)
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .bodyValue(req)
                     .retrieve()
-                    .onStatus(status -> !status.is2xxSuccessful(),
-                            resp -> Mono.error(new GlobalException(ValidationMessages.BANK_API_FAILED,
-                                    resp.statusCode().value())))
                     .bodyToMono(BankCardResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess())
+            if (response == null || !response.isSuccess())
                 throw new GlobalException(ValidationMessages.CARD_ADD_FAILED, HttpStatus.BAD_REQUEST.value());
 
-            return buildResponse(bankResponse.getCard(), ValidationMessages.CARD_ADDED_SUCCESS);
-
+            return buildResponse(response.getCard(), ValidationMessages.CARD_ADDED_SUCCESS);
         } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
+            log.error("Bank API Error: {}", ex.getMessage());
+            throw new GlobalException("Bank API failed", ex.getStatusCode().value());
         }
     }
 
-    // ---------------- Verify Card OTP ----------------
+    // ---------------- VERIFY OTP ----------------
     public ApiResponseDTO<Map<String, Object>> verifyCardOtp(CardOtpRequest req,
-                                                             String mobile,
-                                                             String ip,
+                                                             String mobile, String ip,
                                                              String deviceId,
-                                                             Double latitude,
-                                                             Double longitude) {
+                                                             Double latitude, Double longitude) {
         log.info(LogMessages.OTP_VERIFY_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
         validateOtp(req.getOtp());
 
         if (USE_MOCK) {
-            if (!DEMO_OTP.equals(req.getOtp())) {
-                log.warn(LogMessages.OTP_VERIFY_FAILED, mobile, "invalid-otp");
-                throw new GlobalException(ValidationMessages.OTP_INVALID, HttpStatus.BAD_REQUEST.value());
-            }
-            return buildOtpResponse();
+            if (!DEMO_OTP.equals(req.getOtp()))
+                throw new GlobalException("Invalid OTP", HttpStatus.BAD_REQUEST.value());
+            return buildOtpResponse(req.getCardType());
         }
+
         try {
-            BankCardResponse bankResponse = bankWebClient.post()
-                    .uri(PROD_VERIFY_CARD_URL)
+            String verifyUrl = req.getCardType().equalsIgnoreCase("DEBIT")
+                    ? PROD_VERIFY_CARD_URL + "/debit"
+                    : PROD_VERIFY_CARD_URL + "/credit";
+
+            BankCardResponse response = bankWebClient.post()
+                    .uri(verifyUrl)
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .bodyValue(req)
                     .retrieve()
                     .bodyToMono(BankCardResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess())
-                throw new GlobalException(ValidationMessages.OTP_INVALID, HttpStatus.BAD_REQUEST.value());
+            if (response == null || !response.isSuccess())
+                throw new GlobalException(ValidationMessages.CARD_VARIFY_FAIL, HttpStatus.BAD_REQUEST.value());
 
-            return buildOtpResponse();
-
+            return buildOtpResponse(req.getCardType());
         } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
-            throw new GlobalException(ValidationMessages.BANK_API_FAILED, ex.getStatusCode().value());
+            throw new GlobalException("Bank API failed", ex.getStatusCode().value());
         }
     }
 
-    // ---------------- Get Cards ----------------
-    public ApiResponseDTO<Map<String, Object>> getCards(String mobile,
-                                                        String ip,
-                                                        String deviceId,
-                                                        Double latitude,
-                                                        Double longitude,
-                                                        String type) {
-        log.info(LogMessages.GET_CARDS, mobile);
+    // ---------------- GET CARDS ----------------
+    public ApiResponseDTO<Map<String, Object>> getCards(String mobile, String ip,
+                                                        String deviceId, Double latitude,
+                                                        Double longitude, String type) {
         validateRequest(mobile, ip, deviceId, latitude, longitude);
-
         List<BankCardResponse.CardDetail> allCards;
 
-        // ---------------- MOCK DATA ----------------
         if (USE_MOCK) {
-            BankCardResponse.CardDetail creditCard = new BankCardResponse.CardDetail();
-            creditCard.setCardNumber("************4321");
-            creditCard.setHolderName("John Doe");
-            creditCard.setValidThru("12/26");
-            creditCard.setVerified(true);
-            creditCard.setOtpSentAt(null); // optional
-            creditCard.setAddedAt(LocalDateTime.now());
-            creditCard.setMetadata(Map.of("type", "CREDIT"));
-
-            BankCardResponse.CardDetail debitCard = new BankCardResponse.CardDetail();
-            debitCard.setCardNumber("************5678");
-            debitCard.setHolderName("Alice Brown");
-            debitCard.setValidThru("08/25");
-            debitCard.setVerified(true);
-            debitCard.setOtpSentAt(null);
-            debitCard.setAddedAt(LocalDateTime.now());
-            debitCard.setMetadata(Map.of("type", "DEBIT"));
-
-            allCards = List.of(creditCard, debitCard);
-        }
-        // ---------------- REAL BANK CALL ----------------
-        else {
-            BankCardResponse bankResponse = bankWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(PROD_CARD_URL)
-                            .queryParam("type", "DEBIT,CREDIT") // fetch all
-                            .build())
+            allCards = buildMockCardList();
+        } else {
+            BankCardResponse response = bankWebClient.get()
+                    .uri(uriBuilder -> uriBuilder.path(PROD_CARD_URL)
+                            .queryParam("type", "DEBIT,CREDIT").build())
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .retrieve()
                     .bodyToMono(BankCardResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess())
-                throw new GlobalException(ValidationMessages.CARDS_FETCH_FAILED, HttpStatus.BAD_REQUEST.value());
-
-            allCards = bankResponse.getCards();
+            if (response == null || !response.isSuccess())
+                throw new GlobalException("Failed to fetch cards", HttpStatus.BAD_REQUEST.value());
+            allCards = response.getCards();
         }
 
-        // ---------------- FILTER BY TYPE ----------------
         if (type != null && !type.isBlank()) {
-            String typeUpper = type.toUpperCase();
             allCards = allCards.stream()
-                    .filter(card -> typeUpper.equalsIgnoreCase((String) card.getMetadata().get("type")))
+                    .filter(c -> type.equalsIgnoreCase((String) c.getMetadata().get("type")))
                     .toList();
         }
 
-        // ---------------- BUILD RESPONSE ----------------
         Map<String, Object> data = new HashMap<>();
         data.put("cards", allCards);
-
-        log.info("Cards fetched successfully for mobile: {}. Total cards: {}", mobile, allCards.size());
-        return new ApiResponseDTO<>("SUCCESS",
-                HttpStatus.OK.value(),
-                ValidationMessages.CARDS_LIST_FETCH_SUCCESS,
-                data);
+        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.OK.value(), ValidationMessages.CARD_FETCHED_SUCESS, data);
     }
-    // ---------------- Process Payment ----------------
+
+    // ---------------- PROCESS PAYMENT ----------------
     public ApiResponseDTO<Map<String, Object>> processPayment(PayNowRequest req,
-                                                              String mobile,
-                                                              String ip,
+                                                              String mobile, String ip,
                                                               String deviceId,
-                                                              Double latitude,
-                                                              Double longitude) {
+                                                              Double latitude, Double longitude) {
         log.info(LogMessages.PAYMENT_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
         validateCardForPayment(req);
 
+        String transactionId = "TXN" + System.currentTimeMillis();
+
+        // Debit: validate MPIN
+        if ("DEBIT".equalsIgnoreCase(req.getCardType())) {
+            ApiResponseDTO<MPINValidationResponseDTO> mpinResp =
+                    mpinValidatorUtil.validateCardMPIN(mobile, ip, deviceId, latitude, longitude,
+                            req.getAccountNumber(), req.getMpin(), transactionId);
+
+            if (mpinResp.getData() == null || !mpinResp.getData().isValid()) {
+                throw new GlobalException("Invalid MPIN", HttpStatus.BAD_REQUEST.value());
+            }
+        }
+
         if (USE_MOCK) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("transactionId", "TXN" + System.currentTimeMillis());
-            data.put("amount", req.getAmount());
-            data.put("status", "SUCCESS");
-            data.put("timestamp", LocalDateTime.now());
-            log.info(LogMessages.PAYMENT_SUCCESS, mobile, maskPan(req.getCardNumber()));
-            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PAYMENT_SUCCESS, data);
+            return buildMockPaymentResponse(req, transactionId);
         }
 
         try {
-            BankTransactionResponse bankResponse = bankWebClient.post()
-                    .uri(PROD_TRANSACTION_URL)
+            String bankUrl = req.getCardType().equalsIgnoreCase("DEBIT")
+                    ? PROD_DEBIT_URL : PROD_CREDIT_URL;
+
+            BankTransactionResponse response = bankWebClient.post()
+                    .uri(bankUrl)
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .bodyValue(req)
                     .retrieve()
                     .bodyToMono(BankTransactionResponse.class)
                     .block();
 
-            if (bankResponse == null || !bankResponse.isSuccess())
-                throw new GlobalException("Bank transaction failed", HttpStatus.BAD_REQUEST.value());
+            if (response == null || !response.isSuccess())
+                throw new GlobalException(ValidationMessages.BANK_TRANSECTION_FAIL, HttpStatus.BAD_REQUEST.value());
 
             Map<String, Object> data = new HashMap<>();
-            data.put("transactionId", bankResponse.getTransactionId());
+            data.put("transactionId", response.getTransactionId());
             data.put("amount", req.getAmount());
-            data.put("status", "SUCCESS");
+            data.put("cardType", req.getCardType());
             data.put("timestamp", LocalDateTime.now());
-            return new ApiResponseDTO<>("SUCCESS", HttpStatus.OK.value(),
-                    ValidationMessages.PAYMENT_SUCCESS, data);
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.PAYMENT_SUCCESS,
+                    data);
 
         } catch (WebClientResponseException ex) {
-            log.error(LogMessages.BANK_API_ERROR, ex.getStatusCode().value(), ex.getResponseBodyAsString());
             throw new GlobalException("Bank API failed", ex.getStatusCode().value());
         }
     }
 
-    // ---------------- Helpers ----------------
+    // ---------------- HELPERS ----------------
     private void setBankHeaders(HttpHeaders headers, String mobile, String ip, String deviceId, Double lat, Double lon) {
         headers.set(HttpHeaders.AUTHORIZATION, mobile);
         headers.set("X-Device-Id", deviceId);
@@ -245,14 +214,26 @@ public class CardService {
         headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
     }
 
-    private void validateRequest(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
-        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
+    private void validateRequest(String mobile, String ip, String deviceId, Double lat, Double lon) {
+        userUtils.validateDeviceInfo(ip, deviceId, lat, lon, mobile);
         validationUtil.validateIpFormat(ip, mobile);
         validationUtil.validateDeviceIdFormat(deviceId, mobile);
-        if (latitude != null && longitude != null)
-            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
     }
 
+    private List<BankCardResponse.CardDetail> buildMockCardList() {
+        BankCardResponse.CardDetail debit = new BankCardResponse.CardDetail("************5678", "Alice Brown", "08/25", true, null, LocalDateTime.now(), Map.of("type", "DEBIT"));
+        BankCardResponse.CardDetail credit = new BankCardResponse.CardDetail("************4321", "John Doe", "12/26", true, null, LocalDateTime.now(), Map.of("type", "CREDIT"));
+        return List.of(debit, credit);
+    }
+
+    private void validateCardForPayment(PayNowRequest req) {
+        if (req.getCardNumber() == null || req.getCardNumber().isBlank())
+            throw new GlobalException(ValidationMessages.CARD_ID_BLANK, HttpStatus.BAD_REQUEST.value());
+        if (req.getValidThru() == null || req.getValidThru().isBlank())
+            throw new GlobalException(ValidationMessages.VALID_THRU_BLANK, HttpStatus.BAD_REQUEST.value());
+        if (req.getCardType().equalsIgnoreCase("DEBIT") && !DEMO_MPIN.equals(req.getMpin()))
+            throw new GlobalException("Invalid MPIN", HttpStatus.BAD_REQUEST.value());
+    }
     private void validateCardDetails(CardRequest req) {
         if (req.getCardNumber() == null || req.getCardNumber().isBlank())
             throw new GlobalException(ValidationMessages.CARD_ID_BLANK, HttpStatus.BAD_REQUEST.value());
@@ -268,29 +249,50 @@ public class CardService {
             throw new GlobalException(ValidationMessages.VALID_THRU_INVALID, HttpStatus.BAD_REQUEST.value());
     }
 
-    private void validateCardForPayment(PayNowRequest req) {
-        if (req.getCardNumber() == null || req.getCardNumber().isBlank())
-            throw new GlobalException(ValidationMessages.CARD_ID_BLANK, HttpStatus.BAD_REQUEST.value());
-        if (!req.getCardNumber().matches("\\d{16}"))
-            throw new GlobalException(ValidationMessages.CARD_ID_INVALID, HttpStatus.BAD_REQUEST.value());
-        if (req.getValidThru() == null || req.getValidThru().isBlank())
-            throw new GlobalException(ValidationMessages.VALID_THRU_BLANK, HttpStatus.BAD_REQUEST.value());
-        if (!req.getValidThru().matches("^(0[1-9]|1[0-2])/\\d{2}$"))
-            throw new GlobalException(ValidationMessages.VALID_THRU_INVALID, HttpStatus.BAD_REQUEST.value());
-        if (!DEMO_MPIN.equals(req.getMpin()))
-            throw new GlobalException("Invalid MPIN", HttpStatus.BAD_REQUEST.value());
-    }
 
     private void validateOtp(String otp) {
-        if (otp == null || otp.isBlank())
-            throw new GlobalException(ValidationMessages.OTP_BLANK, HttpStatus.BAD_REQUEST.value());
-        if (!otp.matches("\\d{6}"))
-            throw new GlobalException(ValidationMessages.OTP_FORMAT_INVALID, HttpStatus.BAD_REQUEST.value());
+        if (otp == null || otp.isBlank() || !otp.matches("\\d{6}"))
+            throw new GlobalException("Invalid OTP format", HttpStatus.BAD_REQUEST.value());
+    }
+
+    private ApiResponseDTO<Map<String, Object>> buildOtpResponse(String type) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("verified", true);
+        data.put("cardType", type);
+        data.put("verifiedAt", LocalDateTime.now());
+        return new ApiResponseDTO<>(
+                ValidationMessages.STATUS_OK,
+                HttpStatus.OK.value(),
+                ValidationMessages.CARD_OTP_VERIFY_SUCCESS,
+                data);
+    }
+
+    private ApiResponseDTO<Map<String, Object>> buildMockPaymentResponse(PayNowRequest req, String txnId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("transactionId", txnId);
+        data.put("amount", req.getAmount());
+        data.put("cardType", req.getCardType());
+        data.put("timestamp", LocalDateTime.now());
+        data.put("status", "SUCCESS");
+        return new ApiResponseDTO<>(ValidationMessages.STATUS_OK,
+                HttpStatus.OK.value(),
+                ValidationMessages.PAYMENT_SUCCESS,
+                data);
     }
 
     private String maskPan(String pan) {
         if (pan == null || pan.length() < 4) return "****";
         return "************" + pan.substring(pan.length() - 4);
+    }
+
+    private ApiResponseDTO<Map<String, Object>> buildResponse(Object payload, String message) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("data", payload);
+        return new ApiResponseDTO<>(
+                ValidationMessages.STATUS_OK,
+                HttpStatus.OK.value(),
+                message,
+                data);
     }
 
     private ApiResponseDTO<Map<String, Object>> buildMockCardResponse(CardRequest req, String mobile, boolean verified) {
@@ -299,29 +301,9 @@ public class CardService {
         card.put("cardNumber", maskPan(req.getCardNumber()));
         card.put("holderName", req.getHolderName());
         card.put("validThru", req.getValidThru());
+        card.put("cardType", req.getCardType());
         card.put("verified", verified);
         card.put("otpSentAt", LocalDateTime.now());
         return buildResponse(card, ValidationMessages.CARD_ADDED_SUCCESS);
-    }
-
-    private ApiResponseDTO<Map<String, Object>> buildOtpResponse() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("verified", true);
-        data.put("verifiedAt", LocalDateTime.now());
-        return new ApiResponseDTO<>(
-                "SUCCESS",
-                HttpStatus.OK.value(),
-                ValidationMessages.CARD_OTP_VERIFY_SUCCESS,
-                data);
-    }
-
-    private ApiResponseDTO<Map<String, Object>> buildResponse(Object payload, String message) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("data", payload);
-        return new ApiResponseDTO<>(
-                "SUCCESS",
-                HttpStatus.OK.value(),
-                message,
-                data);
     }
 }

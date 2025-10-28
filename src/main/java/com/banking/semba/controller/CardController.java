@@ -39,7 +39,7 @@ public class CardController {
     }
 
     // ------------------- Verify Card OTP -------------------
-    @PostMapping("card/verify-otp/")
+    @PostMapping("card/verify-otp")
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> verifyOtp(
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader("X-IP") String ip,

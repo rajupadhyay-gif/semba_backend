@@ -12,11 +12,11 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BankCardResponse {
+
     private boolean success;
     private String message;
     private CardDetail card;
     private List<CardDetail> cards;
-    private Map<String, Object> additionalInfo;
 
     @Data
     @NoArgsConstructor
@@ -25,7 +25,6 @@ public class BankCardResponse {
         private String cardNumber;
         private String holderName;
         private String validThru;
-        private String type;
         private boolean verified;
         private LocalDateTime otpSentAt;
         private LocalDateTime addedAt;

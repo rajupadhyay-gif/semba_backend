@@ -13,6 +13,6 @@ public class BankTransactionResponse {
     private boolean success;
     private String transactionId;
     private String message;
-    private double amount;
-    private LocalDateTime timestamp;
+    private Double amount;
+    private String cardType;
 }

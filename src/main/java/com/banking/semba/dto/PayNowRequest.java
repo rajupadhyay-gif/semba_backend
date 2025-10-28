@@ -9,10 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PayNowRequest {
 
-    private String cardNumber;
-    private String holderName;
-    private String validThru;
-    private String mpin;
-    private Double amount;
-    private String bankCode;
+    private String cardNumber;   // 16-digit PAN
+    private String holderName;   // Card holder
+    private String validThru;    // MM/YY
+    private String mpin;         // 4-digit MPIN
+    private Double amount;       // Transaction amount
+    private String bankCode;     // For identifying bank
+    private String accountNumber; // For debit card linkage
+    private String cardType;     // CREDIT or DEBIT
+    private String transactionNote; // Optional (for receipts/logs)
 }
