@@ -5,6 +5,7 @@ public class ValidationMessages {
     public static final String INSUFFICIENT_FUNDS = "Insufficient balance. Available: ₹";
     public static final String SUFFICIENT_FUNDS = "Sufficient balance available. Transaction allowed.";
     public static final String TRANSFER_INITIATED ="Transfer Initiated" ;
+    public static final String STATUS_PENDING = "Pending";
 
     private ValidationMessages() {
     }
