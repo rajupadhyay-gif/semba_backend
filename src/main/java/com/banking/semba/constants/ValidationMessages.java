@@ -2,6 +2,7 @@ package com.banking.semba.constants;
 
 public class ValidationMessages {
     public static final String BANK_TRANSACTION = "Bank Transaction Success";
+    public static final String OTP_RESEND_SUCCESS = "Otp sent successfully";
 
     private ValidationMessages() {
     }
