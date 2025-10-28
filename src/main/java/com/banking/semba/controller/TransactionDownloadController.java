@@ -29,7 +29,7 @@ public class TransactionDownloadController {
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @RequestParam String transactionId,
-            @RequestParam(defaultValue = "json") String format) { // format=json or pdf
+            @RequestParam(defaultValue = "json") String format) {
 
         String mobile = JwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
@@ -42,8 +42,9 @@ public class TransactionDownloadController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauthorizedResponse);
         }
 
-        if (format.equalsIgnoreCase("pdf")) {
-            return transactionDownloadService.downloadTransactionPDF(auth, ip, deviceId, latitude, longitude, transactionId);
+        if (format.equalsIgnoreCase("pdf") || format.equalsIgnoreCase("csv")) {
+            return transactionDownloadService.downloadTransactionReceipt(
+                    auth, ip, deviceId, latitude, longitude, transactionId, format);
         }
 
         ApiResponseDTO<TransactionDownloadDTO> response =

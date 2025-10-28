@@ -3,18 +3,18 @@ package com.banking.semba.service;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.TransactionDownloadDTO;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfWriter;
 
 @Service
 public class TransactionDownloadService {
@@ -26,25 +26,35 @@ public class TransactionDownloadService {
         this.authService = authService;
     }
 
-    public ResponseEntity<byte[]> downloadTransactionPDF(String auth, String ip, String deviceId,
-                                                         Double latitude, Double longitude,
-                                                         String transactionId) {
+    public ResponseEntity<byte[]> downloadTransactionReceipt(String auth, String ip, String deviceId,
+                                                             Double latitude, Double longitude,
+                                                             String transactionId, String format) {
 
         ApiResponseDTO<TransactionDownloadDTO> transactionResponse =
                 fetchTransactionDetails(auth, ip, deviceId, latitude, longitude, transactionId);
 
         if (transactionResponse.getData() == null) {
+            String errorMsg = "Error: " + transactionResponse.getResponseMessage();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(("Error: " + transactionResponse.getResponseMessage()).getBytes());
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(errorMsg.getBytes(StandardCharsets.UTF_8));
         }
 
-        byte[] pdfBytes = generateTransactionPDF(transactionResponse.getData());
-
+        TransactionDownloadDTO dto = transactionResponse.getData();
+        byte[] fileBytes;
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "Transaction_" + transactionId + ".pdf");
 
-        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        if (format.equalsIgnoreCase("csv")) {
+            fileBytes = generateTransactionCSV(dto);
+            headers.setContentType(MediaType.TEXT_PLAIN);
+            headers.setContentDispositionFormData("attachment", "Transaction_" + transactionId + ".csv");
+        } else {
+            fileBytes = generateTransactionPDF(dto);
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Transaction_" + transactionId + ".pdf");
+        }
+
+        return new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
     }
 
     public ApiResponseDTO<TransactionDownloadDTO> fetchTransactionDetails(String auth, String ip,
@@ -80,9 +90,7 @@ public class TransactionDownloadService {
             dto.setBankName("Axis Bank");
             dto.setAmount(2850.00);
             dto.setDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
-
-            String simulatedBankStatus = simulateBankStatus(transactionId);
-            dto.setStatus(simulatedBankStatus);
+            dto.setStatus(simulateBankStatus(transactionId));
 
             responseDTO.setStatus(ValidationMessages.STATUS_OK);
             responseDTO.setResponseCode(HttpStatus.OK.value());
@@ -98,15 +106,6 @@ public class TransactionDownloadService {
         }
 
         return responseDTO;
-    }
-
-    private String simulateBankStatus(String transactionId) {
-        int code = Math.abs(transactionId.hashCode()) % 3;
-        return switch (code) {
-            case 0 -> "SUCCESS";
-            case 1 -> "FAILED";
-            default -> "PENDING";
-        };
     }
 
     private byte[] generateTransactionPDF(TransactionDownloadDTO dto) {
@@ -129,8 +128,8 @@ public class TransactionDownloadService {
             document.add(new Paragraph("Amount: ₹" + dto.getAmount()));
             document.add(new Paragraph("Date: " + dto.getDate()));
             document.add(new Paragraph("Status: " + dto.getStatus()));
-
             document.add(Chunk.NEWLINE);
+            document.add(new Paragraph("Thank you for using SEMBA Banking Services."));
 
             document.close();
             return out.toByteArray();
@@ -140,4 +139,30 @@ public class TransactionDownloadService {
         }
     }
 
+    private byte[] generateTransactionCSV(TransactionDownloadDTO dto) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Transaction Receipt\n");
+        sb.append("Generated on,").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))).append("\n\n");
+        sb.append("Transaction ID,").append(dto.getTransactionId()).append("\n");
+        sb.append("Payment Type,").append(dto.getPaymentType()).append("\n");
+        sb.append("Receiver Name,").append(dto.getReceiverName()).append("\n");
+        sb.append("To Account,").append(dto.getToAccount()).append("\n");
+        sb.append("From Account,").append(dto.getFromAccount()).append("\n");
+        sb.append("Bank Name,").append(dto.getBankName()).append("\n");
+        sb.append("Amount,₹").append(dto.getAmount()).append("\n");
+        sb.append("Date,").append(dto.getDate()).append("\n");
+        sb.append("Status,").append(dto.getStatus()).append("\n");
+        sb.append("\nThank you for using SEMBA Banking Services.");
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String simulateBankStatus(String transactionId) {
+        int code = Math.abs(transactionId.hashCode()) % 3;
+        return switch (code) {
+            case 0 -> "SUCCESS";
+            case 1 -> "FAILED";
+            default -> "PENDING";
+        };
+    }
 }
