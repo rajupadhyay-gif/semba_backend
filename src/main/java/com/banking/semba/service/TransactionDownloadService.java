@@ -1,10 +1,15 @@
 package com.banking.semba.service;
 
+import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.ApiResponseDTO;
 import com.banking.semba.dto.TransactionDownloadDTO;
+import com.banking.semba.security.JwtTokenService;
+import com.banking.semba.util.UserServiceUtils;
+import com.banking.semba.util.ValidationUtil;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,20 +21,46 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class TransactionDownloadService {
 
     private final WebClient webClient = WebClient.builder().build();
     private final AuthService authService;
+    private final ValidationUtil validationUtil;
+    private final UserServiceUtils userUtils;
+    private final JwtTokenService jwtTokenService;
 
-    public TransactionDownloadService(AuthService authService) {
+    public TransactionDownloadService(AuthService authService, ValidationUtil validationUtil, UserServiceUtils userUtils, JwtTokenService jwtTokenService) {
         this.authService = authService;
+        this.validationUtil = validationUtil;
+        this.userUtils = userUtils;
+        this.jwtTokenService = jwtTokenService;
     }
+    private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
+        userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
+        validationUtil.validateIpFormat(ip, mobile);
+        validationUtil.validateDeviceIdFormat(deviceId, mobile);
 
-    public ResponseEntity<byte[]> downloadTransactionReceipt(String auth, String ip, String deviceId,
+        if (latitude != null && longitude != null) {
+            validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
+        }
+    }
+    public ResponseEntity<?> downloadTransactionReceipt(String auth, String ip, String deviceId,
                                                              Double latitude, Double longitude,
                                                              String transactionId, String format) {
-
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            log.warn(LogMessages.UPIID_VALIDATION_UNAUTHORIZED, ValidationMessages.INVALID_JWT);
+            ApiResponseDTO<Object> unauthorizedResponse = new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_UNAUTHORIZED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.INVALID_JWT,
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(unauthorizedResponse);
+        }
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
         ApiResponseDTO<TransactionDownloadDTO> transactionResponse =
                 fetchTransactionDetails(auth, ip, deviceId, latitude, longitude, transactionId);
 

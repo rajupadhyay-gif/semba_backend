@@ -9,6 +9,7 @@ import com.banking.semba.util.MPINValidatorUtil;
 import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -29,13 +30,15 @@ public class BankService {
     private final ValidationUtil validationUtil;
     private final WebClient bankWebClient;
     private final MPINValidatorUtil mpinValidatorUtil;
+    private final AuthService authService;
 
-    public BankService(JwtTokenService jwtTokenService, UserServiceUtils userUtils, ValidationUtil validationUtil, WebClient bankWebClient, MPINValidatorUtil mpinValidatorUtil) {
+    public BankService(JwtTokenService jwtTokenService, UserServiceUtils userUtils, ValidationUtil validationUtil, WebClient bankWebClient, MPINValidatorUtil mpinValidatorUtil, AuthService authService) {
         this.jwtTokenService = jwtTokenService;
         this.userUtils = userUtils;
         this.validationUtil = validationUtil;
         this.bankWebClient = bankWebClient;
         this.mpinValidatorUtil = mpinValidatorUtil;
+        this.authService = authService;
     }
 
     private void validateDevice(String ip, String deviceId, Double latitude, Double longitude, String mobile) {
@@ -61,9 +64,11 @@ public class BankService {
 
         try {
             log.info(LogMessages.API_CALL, "Calling external bank list API...");
+            HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
 
             Object bankList = bankWebClient.get()
                     .uri("https://api.paystack.co/bank")
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class).flatMap(errorBody -> {
@@ -125,8 +130,10 @@ public class BankService {
             );
         }
         validateDevice(ip, deviceId, latitude, longitude, mobile);
+        HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
         Object bankListObj = bankWebClient.get()
                 .uri("https://api.paystack.co/bank")
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)
@@ -185,10 +192,12 @@ public class BankService {
             if (enteredAmount == null || enteredAmount < 1) {
                 throw new IllegalArgumentException("Entered amount must be greater than or equal to 1");
             }
+            HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
+
             Double liveBalance = bankWebClient
                     .get()
                     .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
-                    .header("Authorization", auth)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .bodyToMono(Double.class)
                     .onErrorResume(ex -> {
@@ -274,10 +283,11 @@ public class BankService {
         try {
 
             log.info("Fetching transaction details from bank API for ID: {}", transactionId);
+            HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
 
             TransactionDetailsDTO bankResponse = bankWebClient.get()
                     .uri("bankTransactionApiUrl")
-                    .header("Authorization", auth)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .bodyToMono(TransactionDetailsDTO.class)
                     .onErrorResume(ex -> {

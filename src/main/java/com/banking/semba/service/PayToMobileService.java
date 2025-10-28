@@ -11,6 +11,7 @@ import com.banking.semba.util.UserServiceUtils;
 import com.banking.semba.util.ValidationUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -22,7 +23,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,12 +33,14 @@ public class PayToMobileService {
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
     private final WebClient webClient;
+    private final AuthService authService;
 
-    public PayToMobileService(JwtTokenService jwtTokenService, UserServiceUtils userUtils, ValidationUtil validationUtil, WebClient webClient) {
+    public PayToMobileService(JwtTokenService jwtTokenService, UserServiceUtils userUtils, ValidationUtil validationUtil, WebClient webClient, AuthService authService) {
         this.jwtTokenService = jwtTokenService;
         this.userUtils = userUtils;
         this.validationUtil = validationUtil;
         this.webClient = webClient;
+        this.authService = authService;
     }
 
     private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
@@ -65,6 +67,8 @@ public class PayToMobileService {
         log.info(LogMessages.SEARCH_CONTACTS_START, mobileNumber, name);
 
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
 
 //
 //        List<Map<String, Object>> contacts;
@@ -72,6 +76,7 @@ public class PayToMobileService {
 //            contacts = webClient.get()
 //                    .uri("https://api.paystack.co/contact")
 //                    .header(HttpHeaders.AUTHORIZATION, "Bearer test_secret_key")
+//                            .headers(httpHeaders ->  httpHeaders.addAll(headers))
 //                    .accept(MediaType.APPLICATION_JSON)
 //                    .retrieve()
 //                    .onStatus(status -> status.isError(),
@@ -141,11 +146,13 @@ List<Map<String, Object>> contacts = new ArrayList<>();
         checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
 
         List<RecentPaymentsDTO> dtoList;
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
         try {
             List<Map<String, Object>> dummyPayments = webClient.get()
-                    .uri("https://jsonplaceholder.typicode.com/posts") // dummy URL
+                    .uri("https://jsonplaceholder.typicode.com/posts")
                     .accept(MediaType.APPLICATION_JSON)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
