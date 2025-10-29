@@ -2,6 +2,9 @@ package com.banking.semba.constants;
 
 public class ValidationMessages {
     public static final String BANK_TRANSACTION = "Bank Transaction Success";
+    public static final String PAYMENT_SCHEDULED = "Payment Scheduled Successfully";
+    public static final String INVALID_OTP ="Invalid OTP For Scheduled OTP" ;
+    ;
 
     private ValidationMessages() {
     }
@@ -41,7 +44,7 @@ public class ValidationMessages {
 
     //Resend OTP
     public static final String MOBILE_ALREADY_VERIFIED = "Mobile already verified, please login";
-    public static final String OTP_RESENT_SUCCESS = "OTP resent successfully";
+    public static final String OTP_RESEND_SUCCESS = "OTP resent successfully";
 
     // MPIN related
     public static final String MPIN_BLANK = "MPIN cannot be blank";
