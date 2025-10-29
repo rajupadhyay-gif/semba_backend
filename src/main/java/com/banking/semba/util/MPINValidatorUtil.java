@@ -76,8 +76,8 @@ public class MPINValidatorUtil {
                         MPINValidationResponseDTO fallbackResponse = new MPINValidationResponseDTO();
                         fallbackResponse.setValid("1234".equals(mpin));
                         fallbackResponse.setMessage(fallbackResponse.isValid()
-                                ? "Dummy MPIN validation success"
-                                : "Dummy MPIN validation failed");
+                                ? "MPIN validation success"
+                                : "MPIN validation failed");
                         return reactor.core.publisher.Mono.just(fallbackResponse);
                     })
                     .block();

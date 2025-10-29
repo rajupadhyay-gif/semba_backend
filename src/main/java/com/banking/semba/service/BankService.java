@@ -194,6 +194,14 @@ public class BankService {
             }
             HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
 
+            if (mpin == null || mpin.trim().isEmpty()) {
+                return new ApiResponseDTO<>(
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "MPIN is blank. Please enter a valid MPIN.",
+                        null
+                );
+            }
             Double liveBalance = bankWebClient
                     .get()
                     .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
@@ -202,7 +210,7 @@ public class BankService {
                     .bodyToMono(Double.class)
                     .onErrorResume(ex -> {
                         log.warn("Dummy API failed: {}", ex.getMessage());
-                        return Mono.just(8500.0); // fallback value for testing
+                        return Mono.just(8500.0);
                     })
                     .block();
 
@@ -210,11 +218,10 @@ public class BankService {
                 liveBalance = 8500.0;
             }
 
-            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY, liveBalance);
+            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY);
             String transactionId = UUID.randomUUID().toString();
             BalanceValidationDataDTO responseData = new BalanceValidationDataDTO(
                     enteredAmount,
-                    liveBalance,
                     (liveBalance >= enteredAmount)
                             ? ValidationMessages.TRANSACTION_ALLOWED
                             : ValidationMessages.TRANSACTION_NOT_ALLOWED,

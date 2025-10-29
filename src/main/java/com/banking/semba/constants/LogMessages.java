@@ -2,7 +2,7 @@ package com.banking.semba.constants;
 
 public class LogMessages {
 
-    public static final String LIVE_BALANCE_FETCHED_SUCCESSFULLY = "Live balance fetched successfully: {}";
+    public static final String LIVE_BALANCE_FETCHED_SUCCESSFULLY = "Live balance fetched successfully";
 
     private LogMessages() {
     } // prevent instantiation
@@ -139,7 +139,7 @@ public class LogMessages {
     public static final String API_RESPONSE = "{\"event\":\"external_api_response\",\"status\":\"{}\"}";
 
     // ---------- Refresh Token ----------
-    public static final String SEARCH_BANKS_STARTED = "{\"event\":\"search_banks_started\",\"message\":\"Search banks started\"}";
+    public static final String SEARCH_BANKS_STARTED = "{\"event\":\"search_banks_started\",\"message\":\"Search banks started :{}\"}";
     public static final String SEARCH_BANKS_SUCCESS = "{\"event\":\"search_banks_success\",\"message\":\"Searched banks successfully!\"}";
     public static final String SEARCH_CONTACTS_ERROR = "{\"event\":\"search_contacts_error\",\"error\":\"{}\"}";
     public static final String SEARCH_CONTACTS_START = "{\"event\":\"search_contacts_start\",\"mobile\":\"{}\",\"name\":\"{}\"}";
