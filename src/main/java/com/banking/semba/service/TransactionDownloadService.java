@@ -37,6 +37,7 @@ public class TransactionDownloadService {
         this.userUtils = userUtils;
         this.jwtTokenService = jwtTokenService;
     }
+
     private void checkDeviceInfo(String mobile, String ip, String deviceId, Double latitude, Double longitude) {
         userUtils.validateDeviceInfo(ip, deviceId, latitude, longitude, mobile);
         validationUtil.validateIpFormat(ip, mobile);
@@ -46,9 +47,10 @@ public class TransactionDownloadService {
             validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
         }
     }
+
     public ResponseEntity<?> downloadTransactionReceipt(String auth, String ip, String deviceId,
-                                                             Double latitude, Double longitude,
-                                                             String transactionId, String format) {
+                                                        Double latitude, Double longitude,
+                                                        String transactionId, String format) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             log.warn(LogMessages.UPIID_VALIDATION_UNAUTHORIZED, ValidationMessages.INVALID_JWT);

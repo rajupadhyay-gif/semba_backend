@@ -1,7 +1,9 @@
 package com.banking.semba.controller;
 
-
+import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.ApiResponseDTO;
+import com.banking.semba.dto.BalanceValidationDataDTO;
+import com.banking.semba.dto.BalanceValidationRequestDTO;
 import com.banking.semba.dto.RecentPaymentsDTO;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.service.PayToUpiService;
@@ -14,7 +16,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/pay/upi")
+@RequestMapping("semba/api/pay/upi")
 public class PayToUpiController {
 
     private final JwtTokenService jwtTokenService;
@@ -33,17 +35,17 @@ public class PayToUpiController {
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @RequestParam(value = "upiId", required = false) String upiId
-    )
-         {
-            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>();
-            String mobile = jwtTokenService.extractMobileFromHeader(auth);
-            if (mobile == null || mobile.isEmpty()) {
-                return new ResponseEntity<>(apiResponseDTO, HttpStatus.UNAUTHORIZED);
-            }
-            ApiResponseDTO<Map<String, Object>> response =
-                    payToUpiService.validateUpiId(auth, ip, deviceId, latitude, longitude, upiId);
-            return ResponseEntity.status(response.getResponseCode()).body(response);
+    ) {
+        ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(apiResponseDTO, HttpStatus.UNAUTHORIZED);
         }
+        ApiResponseDTO<Map<String, Object>> response =
+                payToUpiService.validateUpiId(auth, ip, deviceId, latitude, longitude, upiId);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
     @GetMapping("/recent")
     public ResponseEntity<ApiResponseDTO<List<RecentPaymentsDTO>>> recentByUpiId(
             @RequestHeader("Authorization") String auth,
@@ -62,6 +64,35 @@ public class PayToUpiController {
 
         ApiResponseDTO<List<RecentPaymentsDTO>> response =
                 payToUpiService.getRecentPaymentsByUpiId(auth, ip, deviceId, latitude, longitude, upiId);
+
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+    @PostMapping("/validate-balance-mpin")
+    public ResponseEntity<ApiResponseDTO<BalanceValidationDataDTO>> validatePaymentAndMpin(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestBody BalanceValidationRequestDTO balanceValidationRequestDTO
+    ) {
+
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponseDTO<>(
+                            ValidationMessages.STATUS_UNAUTHORIZED,
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ValidationMessages.INVALID_JWT,
+                            null
+                    )
+            );
+        }
+
+        ApiResponseDTO<BalanceValidationDataDTO> response = payToUpiService.validateBankBalance(
+                auth, ip, deviceId, latitude, longitude, balanceValidationRequestDTO.getAccountNumber(), balanceValidationRequestDTO.getEnteredAmount(), balanceValidationRequestDTO.getMpin()
+        );
 
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }

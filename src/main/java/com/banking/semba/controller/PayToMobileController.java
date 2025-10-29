@@ -82,7 +82,6 @@ public class PayToMobileController {
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @RequestBody BalanceValidationRequestDTO balanceValidationRequestDTO
     ) {
-
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -96,7 +95,7 @@ public class PayToMobileController {
         }
 
         ApiResponseDTO<BalanceValidationDataDTO> response = bankService.validateBankBalance(
-                auth, ip, deviceId, latitude, longitude,balanceValidationRequestDTO.getAccountNumber(),balanceValidationRequestDTO.getEnteredAmount(),balanceValidationRequestDTO.getMpin()
+                auth, ip, deviceId, latitude, longitude, balanceValidationRequestDTO.getAccountNumber(), balanceValidationRequestDTO.getEnteredAmount(), balanceValidationRequestDTO.getMpin()
         );
 
         return ResponseEntity.status(response.getResponseCode()).body(response);
@@ -122,7 +121,7 @@ public class PayToMobileController {
                     )
             );
         }
-        ApiResponseDTO<TransactionDetailsDTO> response = bankService.getTransactionDetails(auth,ip,deviceId,latitude,longitude, transactionId);
+        ApiResponseDTO<TransactionDetailsDTO> response = bankService.getTransactionDetails(auth, ip, deviceId, latitude, longitude, transactionId);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
