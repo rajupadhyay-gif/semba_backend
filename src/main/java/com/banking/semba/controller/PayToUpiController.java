@@ -35,17 +35,17 @@ public class PayToUpiController {
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @RequestParam(value = "upiId", required = false) String upiId
-    )
-         {
-            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>();
-            String mobile = jwtTokenService.extractMobileFromHeader(auth);
-            if (mobile == null || mobile.isEmpty()) {
-                return new ResponseEntity<>(apiResponseDTO, HttpStatus.UNAUTHORIZED);
-            }
-            ApiResponseDTO<Map<String, Object>> response =
-                    payToUpiService.validateUpiId(auth, ip, deviceId, latitude, longitude, upiId);
-            return ResponseEntity.status(response.getResponseCode()).body(response);
+    ) {
+        ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(apiResponseDTO, HttpStatus.UNAUTHORIZED);
         }
+        ApiResponseDTO<Map<String, Object>> response =
+                payToUpiService.validateUpiId(auth, ip, deviceId, latitude, longitude, upiId);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
     @GetMapping("/recent")
     public ResponseEntity<ApiResponseDTO<List<RecentPaymentsDTO>>> recentByUpiId(
             @RequestHeader("Authorization") String auth,
@@ -91,7 +91,7 @@ public class PayToUpiController {
         }
 
         ApiResponseDTO<BalanceValidationDataDTO> response = payToUpiService.validateBankBalance(
-                auth, ip, deviceId, latitude, longitude,balanceValidationRequestDTO.getAccountNumber(),balanceValidationRequestDTO.getEnteredAmount(),balanceValidationRequestDTO.getMpin()
+                auth, ip, deviceId, latitude, longitude, balanceValidationRequestDTO.getAccountNumber(), balanceValidationRequestDTO.getEnteredAmount(), balanceValidationRequestDTO.getMpin()
         );
 
         return ResponseEntity.status(response.getResponseCode()).body(response);

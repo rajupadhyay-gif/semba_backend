@@ -95,22 +95,22 @@ public class PayToMobileService {
 //        }
 //
 //        if (contacts == null) contacts = List.of();
-List<Map<String, Object>> contacts = new ArrayList<>();
-    contacts.add(Map.of(
-            "name", "Rajesh Kumar",
-            "mobileNumber", "7729955925",
-            "email", "rajesh.kumar@example.com"
-            ));
-    contacts.add(Map.of(
-            "name", "Priya Singh",
-            "mobileNumber", "7700112233",
-            "email", "priya.singh@example.com"
-            ));
-    contacts.add(Map.of(
-            "name", "John Doe",
-            "mobileNumber", "7711223344",
-            "email", "john.doe@example.com"
-            ));
+        List<Map<String, Object>> contacts = new ArrayList<>();
+        contacts.add(Map.of(
+                "name", "Rajesh Kumar",
+                "mobileNumber", "7729955925",
+                "email", "rajesh.kumar@example.com"
+        ));
+        contacts.add(Map.of(
+                "name", "Priya Singh",
+                "mobileNumber", "7700112233",
+                "email", "priya.singh@example.com"
+        ));
+        contacts.add(Map.of(
+                "name", "John Doe",
+                "mobileNumber", "7711223344",
+                "email", "john.doe@example.com"
+        ));
         List<Map<String, Object>> filteredContacts = contacts.stream()
                 .filter(contact -> {
                     if ((mobileNumber == null || mobileNumber.isBlank()) &&
@@ -160,7 +160,8 @@ List<Map<String, Object>> contacts = new ArrayList<>();
                                             new CustomException("External API failed: " + error, "Error")
                                     ))
                     )
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
                     .block();
 
             if (dummyPayments == null) dummyPayments = List.of();
@@ -176,7 +177,7 @@ List<Map<String, Object>> contacts = new ArrayList<>();
                     ))
                     .collect(Collectors.toList());
 
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             return new ApiResponseDTO<>(
                     "ERROR",
                     HttpStatus.BAD_GATEWAY.value(),
@@ -190,7 +191,6 @@ List<Map<String, Object>> contacts = new ArrayList<>();
                 dtoList
         );
     }
-
 
 
 }

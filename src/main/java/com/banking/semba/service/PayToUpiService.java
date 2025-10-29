@@ -110,7 +110,8 @@ public class PayToUpiService {
                                             new CustomException("External API failed: " + error, "Failed")
                                     ))
                     )
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
         } catch (Exception ex) {
@@ -173,7 +174,8 @@ public class PayToUpiService {
                                             new CustomException("External API failed: " + error, "Failed")
                                     ))
                     )
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    })
                     .block();
 
             if (externalData == null || externalData.isEmpty()) {
@@ -198,7 +200,7 @@ public class PayToUpiService {
                     ))
                     .collect(Collectors.toList());
 
-            log.info("{\"event\":\"recent_upi_fetch_success\",\"upiId\":\"{}\",\"count\":{}}", upiId,dtoList.size());
+            log.info("{\"event\":\"recent_upi_fetch_success\",\"upiId\":\"{}\",\"count\":{}}", upiId, dtoList.size());
             return new ApiResponseDTO<>(
                     ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
@@ -217,97 +219,97 @@ public class PayToUpiService {
         }
     }
 
-    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount,String mpin
+    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount, String mpin
     ) {
 
-            String mobile = jwtTokenService.extractMobileFromHeader(auth);
-            if (mobile == null || mobile.isEmpty()) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_UNAUTHORIZED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.INVALID_JWT,
+                    null
+            );
+        }
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+
+        try {
+            log.info("Fetching live balance for account: {}", accountNumber);
+            if (enteredAmount == null || enteredAmount < 1) {
+                throw new IllegalArgumentException("Entered amount must be greater than or equal to 1");
+            }
+            HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
+
+            if (mpin == null || mpin.trim().isEmpty()) {
                 return new ApiResponseDTO<>(
-                        ValidationMessages.STATUS_UNAUTHORIZED,
-                        HttpStatus.UNAUTHORIZED.value(),
-                        ValidationMessages.INVALID_JWT,
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "MPIN is blank. Please enter a valid MPIN.",
                         null
                 );
             }
-            checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+            Double liveBalance = webClient
+                    .get()
+                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}", accountNumber)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+                    .retrieve()
+                    .bodyToMono(Double.class)
+                    .onErrorResume(ex -> {
+                        log.warn("Dummy API failed: {}", ex.getMessage());
+                        return Mono.just(8500.0);
+                    })
+                    .block();
 
-            try {
-                log.info("Fetching live balance for account: {}", accountNumber);
-                if (enteredAmount == null || enteredAmount < 1) {
-                    throw new IllegalArgumentException("Entered amount must be greater than or equal to 1");
-                }
-                HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
+            if (liveBalance == null) {
+                liveBalance = 8500.0;
+            }
 
-                if (mpin == null || mpin.trim().isEmpty()) {
-                    return new ApiResponseDTO<>(
-                            ValidationMessages.STATUS_FAILED,
-                            HttpStatus.BAD_REQUEST.value(),
-                            "MPIN is blank. Please enter a valid MPIN.",
-                            null
-                    );
-                }
-                Double liveBalance = webClient
-                        .get()
-                        .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
-                        .headers(httpHeaders -> httpHeaders.addAll(headers))
-                        .retrieve()
-                        .bodyToMono(Double.class)
-                        .onErrorResume(ex -> {
-                            log.warn("Dummy API failed: {}", ex.getMessage());
-                            return Mono.just(8500.0);
-                        })
-                        .block();
+            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY);
+            String transactionId = UUID.randomUUID().toString();
+            BalanceValidationDataDTO responseData = new BalanceValidationDataDTO(
+                    enteredAmount,
+                    (liveBalance >= enteredAmount)
+                            ? ValidationMessages.TRANSACTION_ALLOWED
+                            : ValidationMessages.TRANSACTION_NOT_ALLOWED,
+                    transactionId
+            );
 
-                if (liveBalance == null) {
-                    liveBalance = 8500.0;
-                }
-
-                log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY);
-                String transactionId = UUID.randomUUID().toString();
-                BalanceValidationDataDTO responseData = new BalanceValidationDataDTO(
-                        enteredAmount,
-                        (liveBalance >= enteredAmount)
-                                ? ValidationMessages.TRANSACTION_ALLOWED
-                                : ValidationMessages.TRANSACTION_NOT_ALLOWED,
-                        transactionId
-                );
-
-                if (liveBalance < enteredAmount) {
-                    return new ApiResponseDTO<>(
-                            ValidationMessages.STATUS_FAILED,
-                            HttpStatus.BAD_REQUEST.value(),
-                            ValidationMessages.INSUFFICIENT_FUNDS,
-                            responseData
-                    );
-                }
-
-                ApiResponseDTO<MPINValidationResponseDTO> mpinResponse =
-                        mpinValidatorUtil.validateMPIN(auth, ip, deviceId, latitude, longitude, accountNumber, mpin, transactionId);
-
-                if (!"SUCCESS".equalsIgnoreCase(mpinResponse.getStatus())) {
-                    return new ApiResponseDTO<>(
-                            ValidationMessages.STATUS_FAILED,
-                            HttpStatus.BAD_REQUEST.value(),
-                            "MPIN validation failed: " + mpinResponse.getResponseMessage(),
-                            responseData
-                    );
-                }
-
+            if (liveBalance < enteredAmount) {
                 return new ApiResponseDTO<>(
-                        ValidationMessages.STATUS_OK,
-                        HttpStatus.OK.value(),
-                        ValidationMessages.SUFFICIENT_FUNDS+ " Transaction ID: " + transactionId,
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        ValidationMessages.INSUFFICIENT_FUNDS,
                         responseData
                 );
+            }
 
-            } catch (Exception e) {
-                log.error("Error validating bank balance: {}", e.getMessage(), e);
+            ApiResponseDTO<MPINValidationResponseDTO> mpinResponse =
+                    mpinValidatorUtil.validateMPIN(auth, ip, deviceId, latitude, longitude, accountNumber, mpin, transactionId);
+
+            if (!"SUCCESS".equalsIgnoreCase(mpinResponse.getStatus())) {
                 return new ApiResponseDTO<>(
-                        ValidationMessages.STATUS_ERROR,
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        ValidationMessages.UNKNOWN_ERROR + e.getMessage(),
-                        null
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "MPIN validation failed: " + mpinResponse.getResponseMessage(),
+                        responseData
                 );
             }
+
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.SUFFICIENT_FUNDS + " Transaction ID: " + transactionId,
+                    responseData
+            );
+
+        } catch (Exception e) {
+            log.error("Error validating bank balance: {}", e.getMessage(), e);
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_ERROR,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    ValidationMessages.UNKNOWN_ERROR + e.getMessage(),
+                    null
+            );
         }
+    }
 }

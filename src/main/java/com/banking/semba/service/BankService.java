@@ -153,7 +153,8 @@ public class BankService {
             throw new CustomException(
                     ValidationMessages.NO_BANKS_FOUND,
                     ValidationMessages.ERROR_CODE_NO_BANKS
-            );        }
+            );
+        }
 
         Map<String, Object> bankMap = (Map<String, Object>) bankListObj;
 
@@ -174,7 +175,7 @@ public class BankService {
         );
     }
 
-    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount,String mpin
+    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount, String mpin
     ) {
 
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
@@ -204,7 +205,7 @@ public class BankService {
             }
             Double liveBalance = bankWebClient
                     .get()
-                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
+                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}", accountNumber)
                     .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .bodyToMono(Double.class)
@@ -252,7 +253,7 @@ public class BankService {
             return new ApiResponseDTO<>(
                     ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
-                    ValidationMessages.SUFFICIENT_FUNDS+ " Transaction ID: " + transactionId,
+                    ValidationMessages.SUFFICIENT_FUNDS + " Transaction ID: " + transactionId,
                     responseData
             );
 
@@ -267,7 +268,7 @@ public class BankService {
         }
     }
 
-    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth,String ip,String deviceId,Double latitude,Double longitude, String transactionId) {
+    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth, String ip, String deviceId, Double latitude, Double longitude, String transactionId) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             return new ApiResponseDTO<>(
