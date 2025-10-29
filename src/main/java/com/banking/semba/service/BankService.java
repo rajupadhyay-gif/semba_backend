@@ -331,7 +331,7 @@ public class BankService {
                     "FAILED",
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "Unable to fetch transaction details: " + e.getMessage(),
-                    null
+                    null //
             );
         }
     }
