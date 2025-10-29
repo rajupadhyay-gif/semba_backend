@@ -232,7 +232,7 @@ public class BankService {
                 return new ApiResponseDTO<>(
                         ValidationMessages.STATUS_FAILED,
                         HttpStatus.BAD_REQUEST.value(),
-                        ValidationMessages.INSUFFICIENT_FUNDS + liveBalance,
+                        ValidationMessages.INSUFFICIENT_FUNDS,
                         responseData
                 );
             }
