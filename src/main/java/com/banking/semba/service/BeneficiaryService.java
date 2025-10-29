@@ -28,6 +28,11 @@ import static com.banking.semba.GlobalException.GlobalExceptionHandler.badReques
 @Service
 public class BeneficiaryService {
 
+    private static final List<String> BANKS = List.of(
+            "HDFC", "ICICI", "SBI", "AXIS", "KOTAK MAHINDRA", "INDUSIND", "YES BANK", "IDFC FIRST",
+            "BANDHAN", "FEDERAL BANK", "RBL BANK", "PNB", "CANARA BANK", "UNION BANK", "BANK OF INDIA",
+            "INDIAN BANK", "CENTRAL BANK OF INDIA", "BANK OF BARODA", "UCO BANK", "SOUTH INDIAN BANK"
+    );
     private final ValidationUtil validationUtil;
     private final UserServiceUtils userUtils;
     private final WebClient webClient;
@@ -49,11 +54,7 @@ public class BeneficiaryService {
             validationUtil.validateLocation(latitude, String.valueOf(longitude), mobile);
         }
     }
-    private static final List<String> BANKS = List.of(
-            "HDFC", "ICICI", "SBI", "AXIS", "KOTAK MAHINDRA", "INDUSIND", "YES BANK", "IDFC FIRST",
-            "BANDHAN", "FEDERAL BANK", "RBL BANK", "PNB", "CANARA BANK", "UNION BANK", "BANK OF INDIA",
-            "INDIAN BANK", "CENTRAL BANK OF INDIA", "BANK OF BARODA", "UCO BANK", "SOUTH INDIAN BANK"
-    );
+
     public ResponseEntity<HttpResponseDTO> addBeneficiary(
             String mobile, String ip, String deviceId,
             Double latitude, Double longitude,
@@ -103,10 +104,11 @@ public class BeneficiaryService {
 
             Map<String, Object> response = webClient.post()
                     .uri(externalUrl)
-                    .headers(httpHeaders ->  httpHeaders.addAll(headers))
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
             HttpResponseDTO apiResponse = new HttpResponseDTO(ValidationMessages.STATUS_OK, HttpStatus.OK.value(), ValidationMessages.BENEFICIARY_ADDED_SUCCESSFULLY, response);
@@ -136,7 +138,8 @@ public class BeneficiaryService {
                             Mono.error(new RuntimeException("Client error while calling dummy API")))
                     .onStatus(HttpStatusCode::is5xxServerError, response ->
                             Mono.error(new RuntimeException("Server error while calling dummy API")))
-                    .bodyToFlux(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToFlux(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .collectList()
                     .block();
 
@@ -264,7 +267,7 @@ public class BeneficiaryService {
                     ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
                     ValidationMessages.MSG_PAYEE_DELETED_SUCCESS,
-                    ValidationMessages.DELETED_PAYEE +" "+ payeeId
+                    ValidationMessages.DELETED_PAYEE + " " + payeeId
             );
 
             return ResponseEntity.ok(successResponse);

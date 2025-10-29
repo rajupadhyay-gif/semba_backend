@@ -153,7 +153,8 @@ public class BankService {
             throw new CustomException(
                     ValidationMessages.NO_BANKS_FOUND,
                     ValidationMessages.ERROR_CODE_NO_BANKS
-            );        }
+            );
+        }
 
         Map<String, Object> bankMap = (Map<String, Object>) bankListObj;
 
@@ -174,7 +175,7 @@ public class BankService {
         );
     }
 
-    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount,String mpin
+    public ApiResponseDTO<BalanceValidationDataDTO> validateBankBalance(String auth, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, Double enteredAmount, String mpin
     ) {
 
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
@@ -194,15 +195,23 @@ public class BankService {
             }
             HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
 
+            if (mpin == null || mpin.trim().isEmpty()) {
+                return new ApiResponseDTO<>(
+                        ValidationMessages.STATUS_FAILED,
+                        HttpStatus.BAD_REQUEST.value(),
+                        "MPIN is blank. Please enter a valid MPIN.",
+                        null
+                );
+            }
             Double liveBalance = bankWebClient
                     .get()
-                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}",accountNumber)
+                    .uri("https://dummy-bank-api.com/api/balance?accountNumber={accountNumber}", accountNumber)
                     .headers(httpHeaders -> httpHeaders.addAll(headers))
                     .retrieve()
                     .bodyToMono(Double.class)
                     .onErrorResume(ex -> {
                         log.warn("Dummy API failed: {}", ex.getMessage());
-                        return Mono.just(8500.0); // fallback value for testing
+                        return Mono.just(8500.0);
                     })
                     .block();
 
@@ -210,11 +219,10 @@ public class BankService {
                 liveBalance = 8500.0;
             }
 
-            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY, liveBalance);
+            log.info(LogMessages.LIVE_BALANCE_FETCHED_SUCCESSFULLY);
             String transactionId = UUID.randomUUID().toString();
             BalanceValidationDataDTO responseData = new BalanceValidationDataDTO(
                     enteredAmount,
-                    liveBalance,
                     (liveBalance >= enteredAmount)
                             ? ValidationMessages.TRANSACTION_ALLOWED
                             : ValidationMessages.TRANSACTION_NOT_ALLOWED,
@@ -225,7 +233,7 @@ public class BankService {
                 return new ApiResponseDTO<>(
                         ValidationMessages.STATUS_FAILED,
                         HttpStatus.BAD_REQUEST.value(),
-                        ValidationMessages.INSUFFICIENT_FUNDS + liveBalance,
+                        ValidationMessages.INSUFFICIENT_FUNDS,
                         responseData
                 );
             }
@@ -245,7 +253,7 @@ public class BankService {
             return new ApiResponseDTO<>(
                     ValidationMessages.STATUS_OK,
                     HttpStatus.OK.value(),
-                    ValidationMessages.SUFFICIENT_FUNDS+ " Transaction ID: " + transactionId,
+                    ValidationMessages.SUFFICIENT_FUNDS + " Transaction ID: " + transactionId,
                     responseData
             );
 
@@ -260,7 +268,7 @@ public class BankService {
         }
     }
 
-    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth,String ip,String deviceId,Double latitude,Double longitude, String transactionId) {
+    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth, String ip, String deviceId, Double latitude, Double longitude, String transactionId) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             return new ApiResponseDTO<>(
@@ -324,7 +332,7 @@ public class BankService {
                     "FAILED",
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "Unable to fetch transaction details: " + e.getMessage(),
-                    null
+                    null //
             );
         }
     }

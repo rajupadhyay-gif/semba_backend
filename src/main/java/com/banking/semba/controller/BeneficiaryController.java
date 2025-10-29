@@ -34,7 +34,7 @@ public class BeneficiaryController {
             @RequestHeader("X-Device-Id") String deviceId,
             @RequestHeader(value = "X-Latitude", required = false) Double latitude,
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
-            @Valid @RequestBody com.banking.semba.dto.BeneficiaryDTO beneficiaryDTO
+            @Valid @RequestBody BeneficiaryDTO beneficiaryDTO
     ) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
