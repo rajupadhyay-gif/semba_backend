@@ -31,7 +31,7 @@ public class SecurityConfig {
                         SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/semba/api/**", "/api/auth/login", "/actuator/health","/api/refresh-token",
-                                "/api/logout","/api/forget-mpin","/api/cards/**","pay/upi/**").permitAll()
+                                "/api/logout","/api/forget-mpin","/api/cards/**").permitAll()
                         .anyRequest().authenticated());
 
 //                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

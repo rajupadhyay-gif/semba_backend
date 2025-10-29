@@ -16,7 +16,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/pay/upi")
+@RequestMapping("semba/api/pay/upi")
 public class PayToUpiController {
 
     private final JwtTokenService jwtTokenService;
