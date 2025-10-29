@@ -128,28 +128,33 @@ public class FundTransferService {
                                      Double latitude, Double longitude, OtpVerifyRequestDTO otpRequest) {
         log.info("Verifying OTP | mobile={} | txnId={}", mobile, otpRequest.getTransactionId());
 
+        //  Validate OTP not blank
+        userUtils.validateOtpNotBlank(otpRequest.getOtpCode(), mobile);
         try {
             validateRequest(mobile, ip, deviceId, latitude, longitude);
 
             if (otpRequest.getTransactionId() == null || otpRequest.getTransactionId().isBlank()) {
                 throw new GlobalException(ValidationMessages.MISSING_TRANSACTION_ID, HttpStatus.BAD_REQUEST.value());
             }
-            if (otpRequest.getOtpCode() == null || otpRequest.getOtpCode().isBlank()) {
-                throw new GlobalException(ValidationMessages.OTP_REQUIRED, HttpStatus.BAD_REQUEST.value());
-            }
+            userUtils.validateOtpNotBlank(otpRequest.getOtpCode(), mobile);
+
 
             if (USE_MOCK) {
                 if ("1234".equals(otpRequest.getOtpCode())) {
-                    FundVerifyOtpResponse resp = new FundVerifyOtpResponse(
-                            otpRequest.getTransactionId(),
-                            true,
-                            "₹1,000 transferred successfully via IMPS.",
-                            LocalDateTime.now(),
-                            "Jiya",
-                            "232323454545",
-                            "Shivangi",
-                            "323232454545"
-                    );
+                    FundVerifyOtpResponse resp = FundVerifyOtpResponse.builder()
+                            .transactionId("INBDGH6757575757575")
+                            .success(true)
+                            .message("₹1,000 sent successfully via IMPS.")
+                            .completedAt(LocalDateTime.now())
+                            .toName("Joya")
+                            .toAccount("232323454545")
+                            .fromName("Shivangi")
+                            .fromAccount("323232454545")
+                            .transferType("IMPS")
+                            .amount(new BigDecimal("1000.00"))
+                            .remark("Payment Successful")
+                            .build();
+
                     log.info("OTP verified successfully (MOCK) | txnId={}", otpRequest.getTransactionId());
                     return new HttpResponseDTO(ValidationMessages.STATUS_OK, HttpStatus.OK.value(),
                             ValidationMessages.OTP_VERIFIED_SUCCESS, resp);

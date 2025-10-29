@@ -89,4 +89,6 @@ public class ValidationUtil {
             throw new GlobalException(ValidationMessages.LOCATION_INVALID, HttpStatus.BAD_REQUEST.value());
         }
     }
+
+
 }

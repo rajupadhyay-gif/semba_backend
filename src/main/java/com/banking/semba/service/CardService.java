@@ -83,7 +83,9 @@ public class CardService {
                                                              Double latitude, Double longitude) {
         log.info(LogMessages.OTP_VERIFY_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
-        validateOtp(req.getOtp());
+
+        //  Validate OTP not blank
+        userUtils.validateOtpNotBlank(req.getOtp(), mobile);
 
         if (USE_MOCK) {
             if (!DEMO_OTP.equals(req.getOtp()))
@@ -250,10 +252,10 @@ public class CardService {
     }
 
 
-    private void validateOtp(String otp) {
-        if (otp == null || otp.isBlank() || !otp.matches("\\d{6}"))
-            throw new GlobalException("Invalid OTP format", HttpStatus.BAD_REQUEST.value());
-    }
+//    private void validateOtp(String otp) {
+//        if (otp == null || otp.isBlank() || !otp.matches("\\d{6}"))
+//            throw new GlobalException("Invalid OTP format", HttpStatus.BAD_REQUEST.value());
+//    }
 
     private ApiResponseDTO<Map<String, Object>> buildOtpResponse(String type) {
         Map<String, Object> data = new HashMap<>();

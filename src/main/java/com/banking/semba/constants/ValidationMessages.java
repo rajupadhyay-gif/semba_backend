@@ -143,6 +143,8 @@ public class ValidationMessages {
     public static final String INVALID_TRANSFER_TYPE = "Invalid transfer type. Allowed: IMPS, NEFT, RTGS";
     public static final String MISSING_TRANSACTION_ID = "Transaction ID is required";
     public static final String OTP_REQUIRED = "OTP is required";
+    public static final String INVALID_OTP = "Invalid OTP for scheduler";
+
     private ValidationMessages() {
     }
 
