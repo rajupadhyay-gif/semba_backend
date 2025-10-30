@@ -19,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -31,14 +32,17 @@ public class AuthService {
     private final ValidationUtil validationUtil;
     private final UserServiceUtils userUtils;
     private final JwtTokenService jwtTokenService;
+    private final OtpService otpService;
 
     private static final boolean USE_MOCK = true; // Switch mock/real
 
-    public AuthService(WebClient bankWebClient, ValidationUtil validationUtil, UserServiceUtils userUtils, JwtTokenService jwtTokenService) {
+    public AuthService(WebClient bankWebClient, ValidationUtil validationUtil, UserServiceUtils userUtils, 
+                       JwtTokenService jwtTokenService,OtpService otpService) {
         this.bankWebClient = bankWebClient;
         this.validationUtil = validationUtil;
         this.userUtils = userUtils;
         this.jwtTokenService = jwtTokenService;
+        this.otpService = otpService;
     }
 
     // ---------------- Bank Request DTOs ----------------
@@ -74,45 +78,62 @@ public class AuthService {
         return headers;
     }
 
-    // ---------------- SIGNUP START (Send OTP) ----------------
-    public Mono<ApiResponseDTO<BankOtpResponse>> signupStart(SignupStartRequest req) {
+    public Mono<ApiResponseDTO<Map<String, Object>>> signupStart(SignupStartRequest req) {
         String mobile = req.getMobile().trim();
         validateCommon(mobile, req.getIp(), req.getDeviceId(), req.getLatitude(), req.getLongitude());
 
         if (USE_MOCK) {
             return Mono.fromSupplier(() -> {
-                BankOtpResponse response = new BankOtpResponse();
-                response.setOtpValid(true);
-                response.setTransactionId("TXN-MOCK-OTP-123");
-                log.info("OTP sent successfully (MOCK) for mobile: {}. Transaction ID: {}", mobile, response.getTransactionId());
-                return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.CREATED.value(), ValidationMessages.OTP_SENT_SUCCESS, response);
+                log.info("[MOCK] Signup OTP sent for mobile={}", mobile);
+                Map<String, Object> mockData = Map.of(
+                        "mobile", mobile,
+                        "transactionId", "TXN-MOCK-123456",
+                        "message", ValidationMessages.OTP_SENT_SUCCESS
+                );
+                return new ApiResponseDTO<>(ValidationMessages.STATUS_OK, HttpStatus.CREATED.value(),
+                        ValidationMessages.OTP_SENT_SUCCESS, mockData);
             });
         }
 
-        BankOtpRequest bankRequest = new BankOtpRequest(mobile, null, req.getReferralCode(),
-                req.getIp(), req.getDeviceId(), req.getLatitude(), req.getLongitude());
+        // --- Prepare OTP Request DTO ---
+        OtpSendRequestDTO otpRequest = OtpSendRequestDTO.builder()
+                .mobile(mobile)
+                .context("SIGNUP")
+                .referenceId("SIGNUP-" + System.currentTimeMillis())
+                .build();
 
-        return bankWebClient.post()
-                .uri("/bank/send-otp")
-                .headers(h -> h.addAll(buildHeaders(mobile, req.getIp(), req.getDeviceId(), req.getLatitude(), req.getLongitude())))
-                .bodyValue(bankRequest)
-                .retrieve()
-                .bodyToMono(BankOtpResponse.class)
-                .map(resp -> {
-                    log.info("OTP sent successfully for mobile: {}. Transaction ID: {}", mobile, resp.getTransactionId());
+        // --- Trigger OTP via OtpService ---
+        return Mono.fromSupplier(() -> {
+                    HttpResponseDTO otpResponse = otpService.sendOtp(
+                            null, // pre-login, no auth
+                            req.getIp(),
+                            req.getDeviceId(),
+                            req.getLatitude(),
+                            req.getLongitude(),
+                            otpRequest,
+                            true
+                    );
+
+                    log.info("OTP triggered successfully for signup | mobile={} | refId={}",
+                            mobile, otpRequest.getReferenceId());
+
+                    Map<String, Object> data = Map.of(
+                            "mobile", mobile,
+                            "referenceId", otpRequest.getReferenceId(),
+                            "otpSentAt", LocalDateTime.now(),
+                            "message", ValidationMessages.OTP_SENT_SUCCESS
+                    );
+
                     return new ApiResponseDTO<>(
                             ValidationMessages.STATUS_OK,
                             HttpStatus.CREATED.value(),
                             ValidationMessages.OTP_SENT_SUCCESS,
-                            resp);
-                })
-                .onErrorResume(WebClientResponseException.class, ex -> {
-                    log.error("BANK API ERROR during OTP send for mobile: {}. Status: {}, ResponseBody: {}", mobile, ex.getStatusCode().value(), ex.getResponseBodyAsString(), ex);
-                    return Mono.error(new GlobalException(ValidationMessages.BANKING_FAILED + ": " + ex.getResponseBodyAsString(), ex.getStatusCode().value()));
+                            data);
                 })
                 .onErrorResume(Exception.class, ex -> {
-                    log.error("Unexpected exception during OTP send for mobile: {}. Error: {}", mobile, ex.getMessage(), ex);
-                    return Mono.error(new GlobalException(ValidationMessages.ERROR_CALL_API + ": " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+                    log.error("Error sending signup OTP for mobile={} | err={}", mobile, ex.getMessage());
+                    return Mono.error(new GlobalException("Failed to send OTP: " + ex.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
                 });
     }
 

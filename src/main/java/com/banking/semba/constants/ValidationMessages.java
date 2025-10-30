@@ -145,6 +145,9 @@ public class ValidationMessages {
     public static final String OTP_REQUIRED = "OTP is required";
     public static final String INVALID_OTP = "Invalid OTP for scheduler";
 
+    public static final String OTP_SEND_FAILED = "Failed to send OTP.";
+    public static final String MOBILE_REQUIRED = "Mobile number is required.";
+
     private ValidationMessages() {
     }
 

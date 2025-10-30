@@ -15,6 +15,7 @@ public class BankCardResponse {
 
     private boolean success;
     private String message;
+    private String referenceId;
     private CardDetail card;
     private List<CardDetail> cards;
 

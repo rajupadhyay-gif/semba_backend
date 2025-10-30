@@ -166,6 +166,23 @@ public class BeneficiaryController {
         HttpResponseDTO response = fundTransferService.initiateTransfer(mobile, ip, deviceId, latitude, longitude, request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
+    @PostMapping("/confirm")
+    public ResponseEntity<HttpResponseDTO> confirmPayment(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @Valid @RequestBody ConfirmPaymentRequestDTO request) {
+
+        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+        HttpResponseDTO response = fundTransferService.confirmPayment(auth, ip, deviceId, latitude, longitude, request);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
 
     @PostMapping("/bank-Transfer/verify-otp")
     public ResponseEntity<HttpResponseDTO> verifyOtp(
@@ -181,7 +198,6 @@ public class BeneficiaryController {
         if (mobile == null || mobile.isEmpty()) {
             return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
         }
-
         HttpResponseDTO response = fundTransferService.verifyOtp(mobile, ip, deviceId, latitude, longitude, otpRequest);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
