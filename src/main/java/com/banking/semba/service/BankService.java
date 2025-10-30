@@ -315,6 +315,7 @@ public class BankService {
                     })
                     .block();
 
+            assert bankResponse != null;
             String responseMsg = (bankResponse.getStatus().equalsIgnoreCase("SUCCESS"))
                     ? "Transaction successful."
                     : "Transaction failed.";
