@@ -6,7 +6,6 @@ import com.banking.semba.dto.*;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.service.BankService;
 import com.banking.semba.service.PayToMobileService;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

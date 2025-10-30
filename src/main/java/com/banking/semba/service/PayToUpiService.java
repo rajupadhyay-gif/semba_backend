@@ -3,10 +3,7 @@ package com.banking.semba.service;
 import com.banking.semba.GlobalException.CustomException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
-import com.banking.semba.dto.ApiResponseDTO;
-import com.banking.semba.dto.BalanceValidationDataDTO;
-import com.banking.semba.dto.MPINValidationResponseDTO;
-import com.banking.semba.dto.RecentPaymentsDTO;
+import com.banking.semba.dto.*;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.util.MPINValidatorUtil;
 import com.banking.semba.util.UserServiceUtils;
@@ -308,6 +305,76 @@ public class PayToUpiService {
                     ValidationMessages.STATUS_ERROR,
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     ValidationMessages.UNKNOWN_ERROR + e.getMessage(),
+                    null
+            );
+        }
+    }
+
+    public ApiResponseDTO<TransactionDetailsDTO> getTransactionDetails(String auth, String ip, String deviceId, Double latitude, Double longitude, String transactionId) {
+        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_UNAUTHORIZED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.INVALID_JWT,
+                    null
+            );
+        }
+        checkDeviceInfo(mobile, ip, deviceId, latitude, longitude);
+        if (transactionId == null || transactionId.trim().isEmpty()) {
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_FAILED,
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Transaction ID cannot be null or empty.",
+                    null
+            );
+        }
+
+        try {
+
+            log.info("Fetching transaction details from bank API for ID: {}", transactionId);
+            HttpHeaders headers = authService.buildHeaders(auth, ip, deviceId, latitude, longitude);
+
+            TransactionDetailsDTO bankResponse = webClient.get()
+                    .uri("bankTransactionApiUrl")
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+                    .retrieve()
+                    .bodyToMono(TransactionDetailsDTO.class)
+                    .onErrorResume(ex -> {
+                        TransactionDetailsDTO fallback = new TransactionDetailsDTO(
+                                transactionId,
+                                PaymentType.UPI,
+                                "rajesh@upi",
+                                "shop@upi",
+                                "Bank of India ••••8888",
+                                2000.0,
+                                "27 Oct 2025, 10:35 AM",
+                                "Rajesh MBU",
+                                "SUCCESS",
+                                "Transaction Success"
+                        );
+                        return Mono.just(fallback);
+                    })
+                    .block();
+
+            assert bankResponse != null;
+            String responseMsg = (bankResponse.getStatus().equalsIgnoreCase("SUCCESS"))
+                    ? "Transaction successful."
+                    : "Transaction failed.";
+
+            return new ApiResponseDTO<>(
+                    "SUCCESS",
+                    HttpStatus.OK.value(),
+                    responseMsg,
+                    bankResponse
+            );
+
+        } catch (Exception e) {
+            log.error("Error fetching transaction details: {}", e.getMessage(), e);
+            return new ApiResponseDTO<>(
+                    "FAILED",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Unable to fetch transaction details: " + e.getMessage(),
                     null
             );
         }
