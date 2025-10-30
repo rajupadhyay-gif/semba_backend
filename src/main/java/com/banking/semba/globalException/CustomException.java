@@ -1,4 +1,4 @@
-package com.banking.semba.GlobalException;
+package com.banking.semba.globalException;
 
 public class CustomException extends RuntimeException {
     private final String errorCode;

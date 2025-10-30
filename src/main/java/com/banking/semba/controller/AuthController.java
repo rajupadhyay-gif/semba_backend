@@ -26,7 +26,7 @@ public class AuthController {
     }
     // ---------------- SIGNUP START ----------------
     @PostMapping("signup/send-otp")
-    public Mono<ResponseEntity<ApiResponseDTO<BankOtpResponse>>> signupStart(
+    public Mono<ResponseEntity<ApiResponseDTO<Map<String, Object>>>> signupStart(
             @Valid @RequestBody SignupStartRequest req,
             @RequestHeader("X-IP") String ip,
             @RequestHeader("X-Device-Id") String deviceId,

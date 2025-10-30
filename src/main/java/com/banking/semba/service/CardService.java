@@ -1,6 +1,6 @@
 package com.banking.semba.service;
 
-import com.banking.semba.GlobalException.GlobalException;
+import com.banking.semba.globalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.*;
@@ -32,6 +32,7 @@ public class CardService {
     private final UserServiceUtils userUtils;
     private final ValidationUtil validationUtil;
     private final MPINValidatorUtil mpinValidatorUtil;
+    private final OtpService otpService;
 
     private static final String PROD_CARD_URL = "https://api.bank.com/cards";
     private static final String PROD_VERIFY_CARD_URL = "https://api.bank.com/cards/verify";
@@ -49,16 +50,17 @@ public class CardService {
         log.info(LogMessages.CARD_ADD_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
         validateCardDetails(req);
-
         if (USE_MOCK) {
             return buildMockCardResponse(req, mobile, false);
         }
 
         try {
-            String bankUrl = req.getCardType().equalsIgnoreCase("DEBIT") ?
-                    PROD_CARD_URL + "/debit/add" : PROD_CARD_URL + "/credit/add";
+            // --- Step 1: Call Core Banking API ---
+            String bankUrl = req.getCardType().equalsIgnoreCase("DEBIT")
+                    ? PROD_CARD_URL + "/debit/add"
+                    : PROD_CARD_URL + "/credit/add";
 
-            BankCardResponse response = bankWebClient.post()
+            BankCardResponse bankResp = bankWebClient.post()
                     .uri(bankUrl)
                     .headers(h -> setBankHeaders(h, mobile, ip, deviceId, latitude, longitude))
                     .bodyValue(req)
@@ -66,13 +68,50 @@ public class CardService {
                     .bodyToMono(BankCardResponse.class)
                     .block();
 
-            if (response == null || !response.isSuccess())
+            if (bankResp == null || !bankResp.isSuccess()) {
                 throw new GlobalException(ValidationMessages.CARD_ADD_FAILED, HttpStatus.BAD_REQUEST.value());
+            }
 
-            return buildResponse(response.getCard(), ValidationMessages.CARD_ADDED_SUCCESS);
+            // --- Step 2: Prepare OTP Request ---
+            String referenceId = "CARD-" + System.currentTimeMillis();
+
+            OtpSendRequestDTO otpRequest = OtpSendRequestDTO.builder()
+                    .mobile(mobile)
+                    .context("CARD_ADD")
+                    .referenceId(referenceId)
+                    .build();
+
+            // --- Step 3: Trigger OTP via OtpService ---
+            HttpResponseDTO otpResponse = otpService.sendOtp(
+                    null, // post-login OTP (no Authorization header)
+                    ip, deviceId, latitude, longitude,
+                    otpRequest,
+                    false
+            );
+
+            log.info("OTP triggered successfully for card add | mobile={} | refId={} | status={}",
+                    mobile, referenceId, otpResponse.getResponseMessage());
+
+            // --- Step 4: Prepare Final Client Response ---
+            Map<String, Object> data = new HashMap<>();
+            data.put("mobile", mobile);
+            data.put("referenceId", referenceId);
+            data.put("otpSentAt", LocalDateTime.now());
+            data.put("message", ValidationMessages.OTP_SENT_SUCCESS);
+
+            return new ApiResponseDTO<>(
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    ValidationMessages.OTP_SENT_SUCCESS,
+                    data
+            );
+
         } catch (WebClientResponseException ex) {
             log.error("Bank API Error: {}", ex.getMessage());
             throw new GlobalException("Bank API failed", ex.getStatusCode().value());
+        } catch (Exception ex) {
+            log.error("Error in addCard: {}", ex.getMessage());
+            throw new GlobalException("Unable to process card add request", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
@@ -83,8 +122,6 @@ public class CardService {
                                                              Double latitude, Double longitude) {
         log.info(LogMessages.OTP_VERIFY_REQUEST, mobile, maskPan(req.getCardNumber()));
         validateRequest(mobile, ip, deviceId, latitude, longitude);
-
-        //  Validate OTP not blank
         userUtils.validateOtpNotBlank(req.getOtp(), mobile);
 
         if (USE_MOCK) {
@@ -236,6 +273,7 @@ public class CardService {
         if (req.getCardType().equalsIgnoreCase("DEBIT") && !DEMO_MPIN.equals(req.getMpin()))
             throw new GlobalException("Invalid MPIN", HttpStatus.BAD_REQUEST.value());
     }
+
     private void validateCardDetails(CardRequest req) {
         if (req.getCardNumber() == null || req.getCardNumber().isBlank())
             throw new GlobalException(ValidationMessages.CARD_ID_BLANK, HttpStatus.BAD_REQUEST.value());
@@ -250,12 +288,6 @@ public class CardService {
         if (!req.getValidThru().matches("^(0[1-9]|1[0-2])/\\d{2}$"))
             throw new GlobalException(ValidationMessages.VALID_THRU_INVALID, HttpStatus.BAD_REQUEST.value());
     }
-
-
-//    private void validateOtp(String otp) {
-//        if (otp == null || otp.isBlank() || !otp.matches("\\d{6}"))
-//            throw new GlobalException("Invalid OTP format", HttpStatus.BAD_REQUEST.value());
-//    }
 
     private ApiResponseDTO<Map<String, Object>> buildOtpResponse(String type) {
         Map<String, Object> data = new HashMap<>();
