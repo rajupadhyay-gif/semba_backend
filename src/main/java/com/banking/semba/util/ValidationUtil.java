@@ -1,6 +1,6 @@
 package com.banking.semba.util;
 
-import com.banking.semba.GlobalException.GlobalException;
+import com.banking.semba.globalException.GlobalException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
 import lombok.extern.slf4j.Slf4j;

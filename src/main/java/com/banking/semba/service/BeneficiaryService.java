@@ -1,8 +1,8 @@
 package com.banking.semba.service;
 
-import com.banking.semba.GlobalException.CustomException;
-import com.banking.semba.GlobalException.GlobalException;
-import com.banking.semba.GlobalException.GlobalExceptionHandler;
+import com.banking.semba.globalException.CustomException;
+import com.banking.semba.globalException.GlobalException;
+import com.banking.semba.globalException.GlobalExceptionHandler;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.BeneficiaryDTO;
 import com.banking.semba.dto.HttpResponseDTO;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.banking.semba.GlobalException.GlobalExceptionHandler.badRequest;
+import static com.banking.semba.globalException.GlobalExceptionHandler.badRequest;
 
 @Slf4j
 @Service

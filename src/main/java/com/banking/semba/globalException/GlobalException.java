@@ -1,4 +1,4 @@
-package com.banking.semba.GlobalException;
+package com.banking.semba.globalException;
 
 import lombok.Getter;
 

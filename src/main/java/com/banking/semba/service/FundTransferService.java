@@ -1,6 +1,6 @@
 package com.banking.semba.service;
 
-import com.banking.semba.GlobalException.GlobalException;
+import com.banking.semba.globalException.GlobalException;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.*;
 import com.banking.semba.dto.response.ConfirmPaymentResponseDTO;
@@ -18,9 +18,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service

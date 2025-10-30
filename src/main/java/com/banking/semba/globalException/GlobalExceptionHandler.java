@@ -1,4 +1,4 @@
-package com.banking.semba.GlobalException;
+package com.banking.semba.globalException;
 
 import com.banking.semba.dto.HttpResponseDTO;
 import org.springframework.http.HttpStatus;

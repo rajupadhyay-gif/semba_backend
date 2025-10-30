@@ -1,6 +1,6 @@
 package com.banking.semba.service;
 
-import com.banking.semba.GlobalException.GlobalException;
+import com.banking.semba.globalException.GlobalException;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.HttpResponseDTO;
 import com.banking.semba.dto.OtpSendRequestDTO;
@@ -11,7 +11,6 @@ import com.banking.semba.util.UserServiceUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

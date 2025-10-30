@@ -1,6 +1,6 @@
 package com.banking.semba.util;
 
-import com.banking.semba.GlobalException.GlobalException;
+import com.banking.semba.globalException.GlobalException;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.OtpSendRequestDTO;
 import com.banking.semba.dto.response.OtpResponseDTO;
