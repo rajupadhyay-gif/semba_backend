@@ -377,12 +377,17 @@ public class AccountService {
             doc.add(title);
             doc.add(Chunk.NEWLINE);
 
-            PdfPTable info = new PdfPTable(2);
+            PdfPTable info = new PdfPTable(1);
             info.setWidthPercentage(100);
             info.addCell(makeCell("Account Name:", dto.getAccountHolderName(), normalFont));
             info.addCell(makeCell("Account Number:", dto.getAccountNumber(), normalFont));
             info.addCell(makeCell("Address:", dto.getAddress(), normalFont));
             info.addCell(makeCell("Branch:", dto.getBranch(), normalFont));
+            info.addCell(makeCell("IFSC:", dto.getIfscCode(), normalFont));
+            info.addCell(makeCell("CifNumber:", dto.getCifNumber(), normalFont));
+            info.addCell(makeCell("Micr Code:", dto.getCkYcNumber(), normalFont));
+            info.addCell(makeCell("Interest Rate:", String.valueOf(dto.getInterestRate()), normalFont));
+            info.addCell(makeCell("Statement Date:", String.valueOf(dto.getStatementDate()), normalFont));
             info.addCell(makeCell("Account Type:", dto.getAccountDescription(), normalFont));
             info.addCell(makeCell("Balance As On:", String.valueOf(dto.getBalanceAsOn()), normalFont));
             info.addCell(makeCell("Search Period:", dto.getSearchPeriod(), normalFont));
