@@ -16,10 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -337,4 +338,178 @@ public class BankService {
             );
         }
     }
+
+    public HttpResponseDTO getTransactions(String mobile, String ip, String deviceId,
+                                           Double latitude, Double longitude,
+                                           String accountNumber,
+                                           LocalDate fromDate, LocalDate toDate,
+                                           String filterType, String transactionType, int limit) {
+
+        HttpResponseDTO response = new HttpResponseDTO();
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
+        try {
+            List<TransactionResponseDTO> transactions;
+
+            try {
+                transactions = bankWebClient.get()
+                        .uri("https://dummyjson.com/transactions")
+                        .headers(httpHeaders -> httpHeaders.addAll(headers))
+                        .retrieve()
+                        .bodyToFlux(TransactionResponseDTO.class)
+                        .collectList()
+                        .block();
+            } catch (Exception ex) {
+                log.warn("Bank URL is not working, showing dummy data instead");
+                transactions = getDummyShowTransactions();
+            }
+
+            LocalDate today = LocalDate.now();
+            LocalDate startDate;
+            LocalDate endDate = today;
+
+            if (filterType != null) {
+                switch (filterType.toUpperCase()) {
+                    case "1M":
+                        startDate = today.minusMonths(1);
+                        break;
+                    case "3M":
+                        startDate = today.minusMonths(3);
+                        break;
+                    case "6M":
+                        startDate = today.minusMonths(6);
+                        break;
+                    case "CUSTOM":
+                        startDate = fromDate != null ? fromDate : today.minusMonths(1);
+                        endDate = toDate != null ? toDate : today;
+                        break;
+                    default:
+                        startDate = today.minusMonths(1);
+                }
+            } else {
+                startDate = today.minusMonths(1);
+            }
+
+            LocalDate finalStartDate = startDate;
+            LocalDate finalEndDate = endDate;
+            transactions = transactions.stream()
+                    .filter(txn -> txn.getTransactionDate() != null)
+                    .filter(txn -> {
+                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+                        return (txnDate.isEqual(finalStartDate) || txnDate.isAfter(finalStartDate))
+                                && (txnDate.isEqual(finalEndDate) || txnDate.isBefore(finalEndDate));
+                    })
+                    .filter(txn -> {
+                        if ("ALL".equalsIgnoreCase(transactionType)) return true;
+                        return txn.getTransactionType().equalsIgnoreCase(transactionType);
+                    })
+                    .sorted(Comparator.comparing(TransactionResponseDTO::getTransactionDate).reversed())
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            response.setResponseCode(200);
+            response.setResponseMessage("Transactions fetched successfully");
+            response.setStatus("SUCCESS");
+            response.setResponseData(transactions);
+
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error fetching transactions", e);
+            response.setResponseCode(500);
+            response.setResponseMessage("Error while fetching transactions: " + e.getMessage());
+            response.setStatus("FAILED");
+            return response;
+        }
+    }
+
+
+    private List<TransactionResponseDTO> getDummyShowTransactions() {
+        List<TransactionResponseDTO> dummy = new ArrayList<>();
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Amazon India")
+                .transactionType("DEBIT")
+                .amount(2499.75)
+                .paymentMode("UPI")
+                .transactionDate(LocalDateTime.now().minusDays(2))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("HDFC Salary Credit")
+                .transactionType("CREDIT")
+                .amount(55000.00)
+                .paymentMode("NEFT")
+                .transactionDate(LocalDateTime.now().minusDays(1))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Zomato")
+                .transactionType("DEBIT")
+                .amount(425.50)
+                .paymentMode("UPI")
+                .transactionDate(LocalDateTime.now().minusDays(4))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("IRCTC Refund")
+                .transactionType("CREDIT")
+                .amount(1280.00)
+                .paymentMode("UPI")
+                .transactionDate(LocalDateTime.now().minusDays(12))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("HP Petrol Pump")
+                .transactionType("DEBIT")
+                .amount(1200.00)
+                .paymentMode("CARD")
+                .transactionDate(LocalDateTime.now().minusDays(18))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Netflix Subscription")
+                .transactionType("DEBIT")
+                .amount(499.00)
+                .paymentMode("AUTOPAY")
+                .transactionDate(LocalDateTime.now().minusDays(28))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Google Play Refund")
+                .transactionType("CREDIT")
+                .amount(200.00)
+                .paymentMode("UPI")
+                .transactionDate(LocalDateTime.now().minusDays(45))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Tata Sky Recharge")
+                .transactionType("DEBIT")
+                .amount(399.00)
+                .paymentMode("NETBANKING")
+                .transactionDate(LocalDateTime.now().minusDays(60))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("Uber Ride")
+                .transactionType("DEBIT")
+                .amount(250.00)
+                .paymentMode("UPI")
+                .transactionDate(LocalDateTime.now().minusDays(75))
+                .build());
+
+        dummy.add(TransactionResponseDTO.builder()
+                .merchantName("LIC Premium Refund")
+                .transactionType("CREDIT")
+                .amount(950.00)
+                .paymentMode("NEFT")
+                .transactionDate(LocalDateTime.now().minusDays(100))
+                .build());
+
+        return dummy;
+    }
+
+
 }
