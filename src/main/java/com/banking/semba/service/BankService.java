@@ -341,21 +341,18 @@ public class BankService {
         }
     }
 
-//    public HttpResponseDTO getTransactions(String mobile, String ip, String deviceId,
-//                                           Double latitude, Double longitude,
-//                                           String accountNumber,
-//                                           LocalDate fromDate, LocalDate toDate,
-//                                           String filterType, String transactionType, int limit) {
-//
-//        HttpResponseDTO response = new HttpResponseDTO();
-//        validateDevice(ip, deviceId, latitude, longitude, mobile);
-//        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
-//
-//        try {
-//            List<TransactionResponseDTO> transactions;
+    public ResponseEntity<HttpResponseDTO> getTransactions(String mobile, String accountNumber, LocalDate fromDate, LocalDate toDate, int limit, String searchTerm, String ip, String deviceId, Double latitude, Double longitude
+    ) {
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+
+        try {
+            String url = "/transactions?accountNumber=" + accountNumber;
+            HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
+//            List<TransactionResponseDTO> allTransactions;
 //
 //            try {
-//                transactions = bankWebClient.get()
+//                allTransactions = bankWebClient.get()
 //                        .uri("https://dummyjson.com/transactions")
 //                        .headers(httpHeaders -> httpHeaders.addAll(headers))
 //                        .retrieve()
@@ -364,124 +361,36 @@ public class BankService {
 //                        .block();
 //            } catch (Exception ex) {
 //                log.warn("Bank URL is not working, showing dummy data instead");
-//                transactions = getDummyShowTransactions();
+//
 //            }
-//
-//            LocalDate today = LocalDate.now();
-//            LocalDate startDate;
-//            LocalDate endDate = today;
-//
-//            if (filterType != null) {
-//                switch (filterType.toUpperCase()) {
-//                    case "1M":
-//                        startDate = today.minusMonths(1);
-//                        break;
-//                    case "3M":
-//                        startDate = today.minusMonths(3);
-//                        break;
-//                    case "6M":
-//                        startDate = today.minusMonths(6);
-//                        break;
-//                    case "CUSTOM":
-//                        startDate = fromDate != null ? fromDate : today.minusMonths(1);
-//                        endDate = toDate != null ? toDate : today;
-//                        break;
-//                    default:
-//                        startDate = today.minusMonths(1);
-//                }
-//            } else {
-//                startDate = today.minusMonths(1);
-//            }
-//
-//            LocalDate finalStartDate = startDate;
-//            LocalDate finalEndDate = endDate;
-//            transactions = transactions.stream()
-//                    .filter(txn -> txn.getTransactionDate() != null)
-//                    .filter(txn -> {
-//                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
-//                        return (txnDate.isEqual(finalStartDate) || txnDate.isAfter(finalStartDate))
-//                                && (txnDate.isEqual(finalEndDate) || txnDate.isBefore(finalEndDate));
-//                    })
-//                    .filter(txn -> {
-//                        if ("ALL".equalsIgnoreCase(transactionType)) return true;
-//                        return txn.getTransactionType().equalsIgnoreCase(transactionType);
-//                    })
-//                    .sorted(Comparator.comparing(TransactionResponseDTO::getTransactionDate).reversed())
-//                    .limit(limit)
-//                    .collect(Collectors.toList());
-//
-//            response.setResponseCode(200);
-//            response.setResponseMessage("Transactions fetched successfully");
-//            response.setStatus("SUCCESS");
-//            response.setResponseData(transactions);
-//
-//            return response;
-//
-//        } catch (Exception e) {
-//            log.error("Error fetching transactions", e);
-//            response.setResponseCode(500);
-//            response.setResponseMessage("Error while fetching transactions: " + e.getMessage());
-//            response.setStatus("FAILED");
-//            return response;
-//        }
-//    }
-
-    public ResponseEntity<HttpResponseDTO> getTransactions(String mobile, String accountNumber, LocalDate fromDate, LocalDate toDate, String searchTerm, int limit, String ip, String deviceId, Double latitude, Double longitude
-    ) {
-
-        validateDevice(ip, deviceId, latitude, longitude, mobile);
-
-        try {
-
-          String url = "/transactions?accountNumber=" + accountNumber;
-            HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
-
-//            List<TransactionResponseDTO> allTransactions = bankWebClient.get()
-//                    .uri(url)
-//                    .headers(httpHeaders -> httpHeaders.addAll(headers))
-//                    .retrieve()
-//                    .bodyToFlux(TransactionResponseDTO.class)
-//                    .collectList()
-//                    .block();
-
             List<TransactionResponseDTO> allTransactions = List.of(
-                    // 🔹 Last 1 month
                     new TransactionResponseDTO("Swiggy", "DEBIT", 650.00, "UPI", LocalDateTime.now().minusDays(2)),
                     new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(5)),
                     new TransactionResponseDTO("Amazon", "DEBIT", 2300.00, "CREDIT_CARD", LocalDateTime.now().minusDays(12)),
                     new TransactionResponseDTO("Big Bazaar", "DEBIT", 1150.00, "DEBIT_CARD", LocalDateTime.now().minusDays(20)),
                     new TransactionResponseDTO("Salary", "CREDIT", 55000.00, "NEFT", LocalDateTime.now().minusDays(27)),
-
-                    // 🔹 Last 3 months
                     new TransactionResponseDTO("Electricity Board", "DEBIT", 1350.00, "NET_BANKING", LocalDateTime.now().minusMonths(1).minusDays(4)),
                     new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.now().minusMonths(2).minusDays(5)),
                     new TransactionResponseDTO("Credit Card Bill", "DEBIT", 18500.00, "NET_BANKING", LocalDateTime.now().minusMonths(3).minusDays(2)),
-
-                    // 🔹 Last 6 months
                     new TransactionResponseDTO("Mutual Fund SIP", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusMonths(4).minusDays(8)),
                     new TransactionResponseDTO("Gym Membership", "DEBIT", 3500.00, "CREDIT_CARD", LocalDateTime.now().minusMonths(5).minusDays(2)),
                     new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.now().minusMonths(6).minusDays(1)),
-
-                    // 🔹 Last 2 years
                     new TransactionResponseDTO("Car Loan EMI", "DEBIT", 8500.00, "AUTODEBIT", LocalDateTime.now().minusYears(1).minusMonths(2)),
                     new TransactionResponseDTO("FD Interest", "CREDIT", 6400.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(1).minusMonths(5)),
                     new TransactionResponseDTO("Travel Booking", "DEBIT", 21000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(2).minusDays(20)),
-
-                    // 🔹 Last 3 years
                     new TransactionResponseDTO("Home Renovation", "DEBIT", 68000.00, "NEFT", LocalDateTime.now().minusYears(2).minusMonths(8)),
                     new TransactionResponseDTO("Tax Refund", "CREDIT", 14500.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(3).minusMonths(2)),
                     new TransactionResponseDTO("Laptop Purchase", "DEBIT", 56000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(7))
             );
 
-
-
-            if (allTransactions == null || allTransactions.isEmpty()) {
+            if (allTransactions.isEmpty()) {
                 return ResponseEntity.ok(
-                        new HttpResponseDTO("SUCCESS", 200, "No transactions found", Collections.emptyList())
+                        new HttpResponseDTO(ValidationMessages.SUCCESS, HttpStatus.OK.value(), ValidationMessages.NO_TRANSACTIONS_FOUND, Collections.emptyList())
                 );
             }
 
             Stream<TransactionResponseDTO> stream = allTransactions.stream();
+
             if (fromDate != null && toDate != null) {
                 stream = stream.filter(t -> {
                     LocalDate txnDate = t.getTransactionDate().toLocalDate();
@@ -491,13 +400,20 @@ public class BankService {
 
             if (searchTerm != null && !searchTerm.isEmpty()) {
                 String lowerSearch = searchTerm.toLowerCase();
-                stream = stream.filter(t ->
-                        t.getMerchantName().toLowerCase().contains(lowerSearch)
-                                || t.getTransactionType().toLowerCase().contains(lowerSearch)
-                                || t.getPaymentMode().toLowerCase().contains(lowerSearch)
-                                || String.valueOf(t.getAmount()).contains(lowerSearch)
-                                || t.getTransactionDate().toString().contains(lowerSearch)
-                );
+
+                stream = stream.filter(txn -> {
+                    String merchant = txn.getMerchantName() != null ? txn.getMerchantName().toLowerCase() : "";
+                    boolean matchesMerchant = merchant.startsWith(lowerSearch);
+
+                    boolean matchesAmount = false;
+                    try {
+                        double searchAmount = Double.parseDouble(searchTerm);
+                        matchesAmount = txn.getAmount() == searchAmount;
+                    } catch (NumberFormatException ignored) {
+                    }
+
+                    return matchesMerchant || matchesAmount;
+                });
             }
 
             List<TransactionResponseDTO> filtered = stream
@@ -506,132 +422,126 @@ public class BankService {
                     .toList();
 
             HttpResponseDTO response = new HttpResponseDTO(
-                    "SUCCESS",
+                    ValidationMessages.SUCCESS,
                     200,
-                    "Transactions fetched successfully",
+                    ValidationMessages.TRANSACTIONS_FETCHED_SUCCESSFULLY,
                     filtered
             );
+
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
             log.error("External API error: {}", e.getMessage());
             HttpResponseDTO response = new HttpResponseDTO(
-                    "FAILED",
-                    e.getErrorCode().value(),
-                    "Error from external API: " + e.getMessage()
+                    ValidationMessages.FAILED,
+                    HttpStatus.BAD_GATEWAY.value(),
+                    ValidationMessages.EXTERNAL_API_NO_RESPONSE + e.getMessage()
             );
-            return ResponseEntity.status(e.getErrorCode().value()).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
 
         } catch (Exception e) {
             log.error("Unexpected error: {}", e.getMessage());
             HttpResponseDTO response = new HttpResponseDTO(
-                    "FAILED",
+                    ValidationMessages.FAILED,
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    "Internal server error"
+                    ValidationMessages.INTERNAL_ERROR
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
 
-    private List<TransactionResponseDTO> getDummySearchTransactions() {
-        List<TransactionResponseDTO> dummy = new ArrayList<>();
+//    private List<TransactionResponseDTO> getDummySearchTransactions() {
+//        List<TransactionResponseDTO> dummy = new ArrayList<>();
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Amazon India")
+//                .transactionType("DEBIT")
+//                .amount(2499.75)
+//                .paymentMode("UPI")
+//                .transactionDate(LocalDateTime.now().minusDays(2))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("HDFC Salary Credit")
+//                .transactionType("CREDIT")
+//                .amount(55000.00)
+//                .paymentMode("NEFT")
+//                .transactionDate(LocalDateTime.now().minusDays(1))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Zomato")
+//                .transactionType("DEBIT")
+//                .amount(425.50)
+//                .paymentMode("UPI")
+//                .transactionDate(LocalDateTime.now().minusDays(4))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("IRCTC Refund")
+//                .transactionType("CREDIT")
+//                .amount(1280.00)
+//                .paymentMode("UPI")
+//                .transactionDate(LocalDateTime.now().minusDays(12))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("HP Petrol Pump")
+//                .transactionType("DEBIT")
+//                .amount(1200.00)
+//                .paymentMode("CARD")
+//                .transactionDate(LocalDateTime.now().minusDays(18))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Netflix Subscription")
+//                .transactionType("DEBIT")
+//                .amount(499.00)
+//                .paymentMode("AUTOPAY")
+//                .transactionDate(LocalDateTime.now().minusDays(28))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Google Play Refund")
+//                .transactionType("CREDIT")
+//                .amount(200.00)
+//                .paymentMode("UPI")
+//                .transactionDate(LocalDateTime.now().minusDays(45))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Tata Sky Recharge")
+//                .transactionType("DEBIT")
+//                .amount(399.00)
+//                .paymentMode("NETBANKING")
+//                .transactionDate(LocalDateTime.now().minusDays(60))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("Uber Ride")
+//                .transactionType("DEBIT")
+//                .amount(250.00)
+//                .paymentMode("UPI")
+//                .transactionDate(LocalDateTime.now().minusDays(75))
+//                .build());
+//
+//        dummy.add(TransactionResponseDTO.builder()
+//                .merchantName("LIC Premium Refund")
+//                .transactionType("CREDIT")
+//                .amount(950.00)
+//                .paymentMode("NEFT")
+//                .transactionDate(LocalDateTime.now().minusDays(100))
+//                .build());
+//
+//        return dummy;
+//    }
 
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Amazon India")
-                .transactionType("DEBIT")
-                .amount(2499.75)
-                .paymentMode("UPI")
-                .transactionDate(LocalDateTime.now().minusDays(2))
-                .build());
 
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("HDFC Salary Credit")
-                .transactionType("CREDIT")
-                .amount(55000.00)
-                .paymentMode("NEFT")
-                .transactionDate(LocalDateTime.now().minusDays(1))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Zomato")
-                .transactionType("DEBIT")
-                .amount(425.50)
-                .paymentMode("UPI")
-                .transactionDate(LocalDateTime.now().minusDays(4))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("IRCTC Refund")
-                .transactionType("CREDIT")
-                .amount(1280.00)
-                .paymentMode("UPI")
-                .transactionDate(LocalDateTime.now().minusDays(12))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("HP Petrol Pump")
-                .transactionType("DEBIT")
-                .amount(1200.00)
-                .paymentMode("CARD")
-                .transactionDate(LocalDateTime.now().minusDays(18))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Netflix Subscription")
-                .transactionType("DEBIT")
-                .amount(499.00)
-                .paymentMode("AUTOPAY")
-                .transactionDate(LocalDateTime.now().minusDays(28))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Google Play Refund")
-                .transactionType("CREDIT")
-                .amount(200.00)
-                .paymentMode("UPI")
-                .transactionDate(LocalDateTime.now().minusDays(45))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Tata Sky Recharge")
-                .transactionType("DEBIT")
-                .amount(399.00)
-                .paymentMode("NETBANKING")
-                .transactionDate(LocalDateTime.now().minusDays(60))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("Uber Ride")
-                .transactionType("DEBIT")
-                .amount(250.00)
-                .paymentMode("UPI")
-                .transactionDate(LocalDateTime.now().minusDays(75))
-                .build());
-
-        dummy.add(TransactionResponseDTO.builder()
-                .merchantName("LIC Premium Refund")
-                .transactionType("CREDIT")
-                .amount(950.00)
-                .paymentMode("NEFT")
-                .transactionDate(LocalDateTime.now().minusDays(100))
-                .build());
-
-        return dummy;
-    }
-
-
-    public ResponseEntity<HttpResponseDTO> searchTransactions(
-            String mobile,
-            String ip,
-            String deviceId,
-            Double latitude,
-            Double longitude,
-            String accountNumber,
-            String searchTerm
+    public ResponseEntity<HttpResponseDTO> searchTransactions(String mobile, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, String searchTerm
     ) {
         validateDevice(ip, deviceId, latitude, longitude, mobile);
-         List<TransactionResponseDTO> allTransactions= List.of(
+        List<TransactionResponseDTO> allTransactions = List.of(
                 new TransactionResponseDTO("Swiggy", "DEBIT", 650.00, "UPI", LocalDateTime.now().minusDays(2)),
                 new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(5)),
                 new TransactionResponseDTO("Amazon", "DEBIT", 2300.00, "CREDIT_CARD", LocalDateTime.now().minusDays(12)),
@@ -657,7 +567,7 @@ public class BankService {
 
             if (allTransactions == null || allTransactions.isEmpty()) {
                 return ResponseEntity.ok(
-                        new HttpResponseDTO("SUCCESS", 200, "No transactions found", Collections.emptyList())
+                        new HttpResponseDTO(ValidationMessages.TRANSACTIONS_FETCHED_SUCCESSFULLY, 200, ValidationMessages.NO_TRANSACTIONS_FOUND, Collections.emptyList())
                 );
             }
 
@@ -685,9 +595,9 @@ public class BankService {
                     .toList();
 
             HttpResponseDTO response = new HttpResponseDTO(
-                    "SUCCESS",
-                    200,
-                    filteredTransactions.isEmpty() ? "No matching transactions found" : "Transactions fetched successfully",
+                    ValidationMessages.STATUS_OK,
+                    HttpStatus.OK.value(),
+                    filteredTransactions.isEmpty() ? ValidationMessages.NO_TRANSACTIONS_FOUND : ValidationMessages.TRANSACTIONS_FETCHED_SUCCESSFULLY,
                     filteredTransactions
             );
 
@@ -696,9 +606,231 @@ public class BankService {
         } catch (Exception e) {
             log.error("Error while fetching transactions: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new HttpResponseDTO("FAILED", 500, "Internal Server Error"));
+                    .body(new HttpResponseDTO(ValidationMessages.FAILED, 500, ValidationMessages.INTERNAL_SERVER_ERROR));
         }
     }
+
+
+//    public ResponseEntity<HttpResponseDTO> getStatement(
+//            String auth,
+//            String ip,
+//            String deviceId,
+//            Double latitude,
+//            Double longitude,
+//            String accountNumber,
+//            String range,
+//            LocalDate fromDate,
+//            LocalDate toDate
+//    ) {
+//        String mobile = jwtTokenService.extractMobileFromHeader(auth);
+//        if (mobile == null || mobile.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                    .body(new HttpResponseDTO("FAILED", 401, "Invalid or expired token"));
+//        }
+//
+//        LocalDate today = LocalDate.now();
+//        LocalDate startDate = switch (range) {
+//            case "30" -> today.minusDays(30);
+//            case "90" -> today.minusDays(90);
+//            case "180" -> today.minusDays(180);
+//            case "365" -> today.minusDays(365);
+//            case "custom" -> (fromDate != null) ? fromDate : today.minusDays(30);
+//            default -> today.minusDays(30);
+//        };
+//        LocalDate endDate = (range.equals("custom") && toDate != null) ? toDate : today;
+//
+//        log.info("📡 Fetching transactions for account {} between {} and {}", accountNumber, startDate, endDate);
+//
+//        try {
+////            List<TransactionResponseDTO> transactions = bankWebClient.get()
+////                    .uri(uriBuilder -> uriBuilder
+////                            .path("/external/transactions")
+////                            .queryParam("accountNumber", accountNumber)
+////                            .queryParam("fromDate", startDate)
+////                            .queryParam("toDate", endDate)
+////                            .build())
+////                    .headers(headers -> {
+////                        headers.setBearerAuth(auth.replace("Bearer ", ""));
+////                        headers.add("X-IP", ip);
+////                        headers.add("X-Device-Id", deviceId);
+////                        if (latitude != null) headers.add("X-Latitude", latitude.toString());
+////                        if (longitude != null) headers.add("X-Longitude", longitude.toString());
+////                    })
+////                    .retrieve()
+////                    .bodyToFlux(TransactionResponseDTO.class)
+////                    .collectList()
+////                    .onErrorResume(ex -> {
+////                        log.error("Error fetching statement: {}", ex.getMessage());
+////                        return Mono.just(List.of());
+////                    })
+////                    .block();
+//
+//            List<TransactionResponseDTO> transactions = List.of(
+//                    new TransactionResponseDTO("Swiggy", "DEBIT", 550.00, "UPI", LocalDateTime.now().minusDays(5)),
+//                    new TransactionResponseDTO("Amazon", "DEBIT", 2500.00, "CREDIT_CARD", LocalDateTime.now().minusDays(15)),
+//                    new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(25)),
+//                    new TransactionResponseDTO("Flipkart", "DEBIT", 1300.00, "DEBIT_CARD", LocalDateTime.now().minusDays(40)),
+//                    new TransactionResponseDTO("Big Bazaar", "DEBIT", 780.00, "NET_BANKING", LocalDateTime.now().minusDays(75)),
+//                    new TransactionResponseDTO("Electricity Board", "DEBIT", 1250.00, "NET_BANKING", LocalDateTime.now().minusMonths(3).minusDays(10)),
+//                    new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.now().minusMonths(4)),
+//                    new TransactionResponseDTO("Gym Membership", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusMonths(5)),
+//                    new TransactionResponseDTO("Credit Card Bill", "DEBIT", 14500.00, "NET_BANKING", LocalDateTime.now().minusMonths(7)),
+//                    new TransactionResponseDTO("Salary", "CREDIT", 60000.00, "BANK_TRANSFER", LocalDateTime.now().minusMonths(8)),
+//                    new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.now().minusYears(1).minusMonths(2)),
+//                    new TransactionResponseDTO("FD Interest", "CREDIT", 5400.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(1).minusMonths(5)),
+//                    new TransactionResponseDTO("Car Loan EMI", "DEBIT", 8500.00, "AUTODEBIT", LocalDateTime.now().minusYears(2).minusMonths(1)),
+//                    new TransactionResponseDTO("Mutual Fund SIP", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusYears(2).minusMonths(6)),
+//                    new TransactionResponseDTO("Travel Booking", "DEBIT", 17500.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(2)),
+//                    new TransactionResponseDTO("Tax Refund", "CREDIT", 9500.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(3).minusMonths(5)),
+//                    new TransactionResponseDTO("Laptop Purchase", "DEBIT", 56000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(7))
+//            );
+//
+//            List<TransactionResponseDTO> filteredTransactions = transactions.stream()
+//                    .filter(txn -> {
+//                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+//                        return (txnDate.isEqual(startDate) || txnDate.isAfter(startDate))
+//                                && (txnDate.isEqual(endDate) || txnDate.isBefore(endDate));
+//                    })
+//                    .collect(Collectors.toList());
+//
+//            return ResponseEntity.ok(
+//                    new HttpResponseDTO("SUCCESS", 200, "Statement fetched successfully", transactions)
+//            );
+//
+//        } catch (Exception e) {
+//            log.error("🔥 Exception while fetching statement", e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new HttpResponseDTO("FAILED", 500, "Error fetching statement data"));
+//        }
+//    }
+
+public ResponseEntity<HttpResponseDTO> getStatement(
+        String auth,
+        String ip,
+        String deviceId,
+        Double latitude,
+        Double longitude,
+        String accountNumber,
+        String range,
+        LocalDate fromDate,
+        LocalDate toDate
+) {
+    String mobile = jwtTokenService.extractMobileFromHeader(auth);
+    if (mobile == null || mobile.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new HttpResponseDTO("FAILED", 401, "Invalid or expired token"));
+    }
+
+    LocalDate today = LocalDate.now();
+    String safeRange = (range == null || range.isBlank()) ? "30" : range.trim();
+
+    LocalDate startDate;
+    LocalDate endDate;
+
+    switch (safeRange) {
+        case "30" -> {
+            startDate = today.minusDays(30);
+            endDate = today;
+        }
+        case "60" -> {
+            startDate = today.minusDays(60);
+            endDate = today;
+        }
+        case "180" -> {
+            startDate = today.minusDays(180);
+            endDate = today;
+        }
+        case "365" -> {
+            startDate = today.minusDays(365);
+            endDate = today;
+        }
+        case "custom" -> {
+            startDate = (fromDate != null) ? fromDate : today.minusDays(30);
+            endDate = (toDate != null) ? toDate : today;
+        }
+        default -> {
+            startDate = today.minusDays(30);
+            endDate = today;
+        }
+    }
+
+    if (fromDate != null && toDate != null) {
+        startDate = fromDate;
+        endDate = toDate;
+    }
+
+    log.info("📡 Fetching statement for account {} between {} and {}", accountNumber, startDate, endDate);
+//    try {
+////            List<TransactionResponseDTO> transactions = bankWebClient.get()
+////                    .uri(uriBuilder -> uriBuilder
+////                            .path("/external/transactions")
+////                            .queryParam("accountNumber", accountNumber)
+////                            .queryParam("fromDate", startDate)
+////                            .queryParam("toDate", endDate)
+////                            .build())
+////                    .headers(headers -> {
+////                        headers.setBearerAuth(auth.replace("Bearer ", ""));
+////                        headers.add("X-IP", ip);
+////                        headers.add("X-Device-Id", deviceId);
+////                        if (latitude != null) headers.add("X-Latitude", latitude.toString());
+////                        if (longitude != null) headers.add("X-Longitude", longitude.toString());
+////                    })
+////                    .retrieve()
+////                    .bodyToFlux(TransactionResponseDTO.class)
+////                    .collectList()
+////                    .onErrorResume(ex -> {
+////                        log.error("Error fetching statement: {}", ex.getMessage());
+////                        return Mono.just(List.of());
+////                    })
+////                    .block();
+    try {
+        List<TransactionResponseDTO> transactions = List.of(
+                new TransactionResponseDTO("Swiggy", "DEBIT", 599.00, "UPI", LocalDateTime.of(2025, 11, 1, 19, 30)),
+                new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.of(2025, 10, 27, 20, 15)),
+                new TransactionResponseDTO("Amazon", "DEBIT", 1800.00, "CREDIT_CARD", LocalDateTime.of(2025, 10, 10, 14, 10)),
+                new TransactionResponseDTO("PhonePe Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.of(2025, 10, 5, 9, 40)),
+                new TransactionResponseDTO("Salary", "CREDIT", 62000.00, "BANK_TRANSFER", LocalDateTime.of(2025, 10, 1, 10, 0)),
+                new TransactionResponseDTO("Electricity Bill", "DEBIT", 1450.00, "NET_BANKING", LocalDateTime.of(2025, 9, 25, 17, 45)),
+                new TransactionResponseDTO("Flipkart", "DEBIT", 2500.00, "DEBIT_CARD", LocalDateTime.of(2025, 9, 20, 15, 30)),
+
+                new TransactionResponseDTO("Swiggy", "DEBIT", 550.00, "UPI", LocalDateTime.of(2025, 3, 10, 10, 30)),
+                new TransactionResponseDTO("Amazon", "DEBIT", 2500.00, "CREDIT_CARD", LocalDateTime.of(2025, 2, 12, 14, 20)),
+                new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.of(2024, 12, 25, 18, 10)),
+                new TransactionResponseDTO("Flipkart", "DEBIT", 1300.00, "DEBIT_CARD", LocalDateTime.of(2024, 8, 9, 12, 45)),
+                new TransactionResponseDTO("Big Bazaar", "DEBIT", 780.00, "NET_BANKING", LocalDateTime.of(2024, 4, 15, 9, 30)),
+                new TransactionResponseDTO("Electricity Board", "DEBIT", 1250.00, "NET_BANKING", LocalDateTime.of(2024, 2, 5, 16, 15)),
+                new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.of(2023, 11, 12, 11, 5)),
+                new TransactionResponseDTO("Gym Membership", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.of(2023, 8, 30, 7, 50)),
+                new TransactionResponseDTO("Credit Card Bill", "DEBIT", 14500.00, "NET_BANKING", LocalDateTime.of(2023, 6, 10, 13, 20)),
+                new TransactionResponseDTO("Salary", "CREDIT", 60000.00, "BANK_TRANSFER", LocalDateTime.of(2023, 3, 1, 10, 0)),
+                new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.of(2023, 1, 25, 17, 40)),
+                new TransactionResponseDTO("FD Interest", "CREDIT", 5400.00, "BANK_TRANSFER", LocalDateTime.of(2023, 2, 15, 10, 10))
+        );
+
+        final LocalDate finalStartDate = startDate;
+        final LocalDate finalEndDate = endDate;
+
+        List<TransactionResponseDTO> filteredTransactions = transactions.stream()
+                .filter(txn -> {
+                    LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+                    return (!txnDate.isBefore(finalStartDate)) && (!txnDate.isAfter(finalEndDate));
+                })
+                .collect(Collectors.toList());
+
+        log.info("Found {} transactions between {} and {}", filteredTransactions.size(), startDate, endDate);
+
+        return ResponseEntity.ok(
+                new HttpResponseDTO("SUCCESS", 200, "Statement fetched successfully", filteredTransactions)
+        );
+
+    } catch (Exception e) {
+        log.error("Error fetching statement: {}", e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new HttpResponseDTO("FAILED", 500, "Error fetching statement data"));
+    }
+}
+
+
 
 
 }

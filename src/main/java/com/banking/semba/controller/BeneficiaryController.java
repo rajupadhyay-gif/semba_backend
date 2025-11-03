@@ -38,7 +38,12 @@ public class BeneficiaryController {
     ) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HttpResponseDTO(ValidationMessages.BAD_REQUEST, HttpStatus.UNAUTHORIZED.value(), ValidationMessages.USER_NOT_FOUND));
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.addBeneficiary(mobile, ip, deviceId, latitude, longitude, beneficiaryDTO);
         return serviceResponse;
@@ -57,7 +62,7 @@ public class BeneficiaryController {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             HttpResponseDTO response = new HttpResponseDTO(
-                    ValidationMessages.BAD_REQUEST,
+                    ValidationMessages.FAILED,
                     HttpStatus.UNAUTHORIZED.value(),
                     ValidationMessages.USER_NOT_FOUND
             );
@@ -80,7 +85,11 @@ public class BeneficiaryController {
     ) {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            HttpResponseDTO response = new HttpResponseDTO(ValidationMessages.BAD_REQUEST, HttpStatus.UNAUTHORIZED.value(), ValidationMessages.USER_NOT_FOUND);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         ResponseEntity<HttpResponseDTO> serviceResponse = beneficiaryService.updatePayee(
@@ -101,7 +110,7 @@ public class BeneficiaryController {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             HttpResponseDTO response = new HttpResponseDTO(
-                    ValidationMessages.BAD_REQUEST,
+                    ValidationMessages.FAILED,
                     HttpStatus.UNAUTHORIZED.value(),
                     ValidationMessages.USER_NOT_FOUND
             );
@@ -122,7 +131,7 @@ public class BeneficiaryController {
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
             HttpResponseDTO response = new HttpResponseDTO(
-                    ValidationMessages.BAD_REQUEST,
+                    ValidationMessages.FAILED,
                     HttpStatus.UNAUTHORIZED.value(),
                     ValidationMessages.USER_NOT_FOUND
             );
@@ -140,10 +149,14 @@ public class BeneficiaryController {
                                                       @RequestHeader(value = "X-Latitude", required = false) Double latitude,
                                                       @RequestHeader(value = "X-Longitude", required = false) Double longitude,
                                                       @RequestParam String bankName) {
-        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         HttpResponseDTO response = bankService.searchBanks(auth, ip, deviceId, latitude, longitude, bankName);
         return ResponseEntity.status(response.getResponseCode()).body(response);
@@ -158,14 +171,19 @@ public class BeneficiaryController {
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @Valid @RequestBody FundTransferRequestDTO request) {
 
-        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         HttpResponseDTO response = fundTransferService.initiateTransfer(mobile, ip, deviceId, latitude, longitude, request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
+
     @PostMapping("/confirm")
     public ResponseEntity<HttpResponseDTO> confirmPayment(
             @RequestHeader("Authorization") String auth,
@@ -175,10 +193,14 @@ public class BeneficiaryController {
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @Valid @RequestBody ConfirmPaymentRequestDTO request) {
 
-        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         HttpResponseDTO response = fundTransferService.confirmPayment(auth, ip, deviceId, latitude, longitude, request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
@@ -193,10 +215,14 @@ public class BeneficiaryController {
             @RequestHeader(value = "X-Longitude", required = false) Double longitude,
             @Valid @RequestBody OtpVerifyRequestDTO otpRequest) {
 
-        HttpResponseDTO httpResponseDTO = new HttpResponseDTO();
         String mobile = jwtTokenService.extractMobileFromHeader(auth);
         if (mobile == null || mobile.isEmpty()) {
-            return new ResponseEntity<>(httpResponseDTO, HttpStatus.UNAUTHORIZED);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         HttpResponseDTO response = fundTransferService.verifyOtp(mobile, ip, deviceId, latitude, longitude, otpRequest);
         return ResponseEntity.status(response.getResponseCode()).body(response);
