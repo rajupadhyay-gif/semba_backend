@@ -104,7 +104,7 @@ public class PayToUpiService {
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
                                     .flatMap(error -> Mono.error(
-                                            new CustomException("External API failed: " + error, "Failed")
+                                            new CustomException("External API failed: " + error,  HttpStatus.INTERNAL_SERVER_ERROR)
                                     ))
                     )
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
@@ -168,7 +168,7 @@ public class PayToUpiService {
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
                                     .flatMap(error -> Mono.error(
-                                            new CustomException("External API failed: " + error, "Failed")
+                                            new CustomException("External API failed: " + error,  HttpStatus.INTERNAL_SERVER_ERROR)
                                     ))
                     )
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {

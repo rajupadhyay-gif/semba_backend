@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -76,7 +78,7 @@ public class BankService {
                                 log.error(LogMessages.FETCH_BANKS_ERROR, errorBody);
                                 return Mono.error(new CustomException(
                                         ValidationMessages.FETCHING_FAILED + " " + errorBody,
-                                        ValidationMessages.ERROR_CODE_FETCH_FAILED
+                                        HttpStatus.BAD_REQUEST
                                 ));
                             })
                     )
@@ -87,7 +89,7 @@ public class BankService {
                 log.warn(LogMessages.FETCH_BANKS_NULL);
                 throw new CustomException(
                         ValidationMessages.NO_BANKS_FOUND,
-                        ValidationMessages.ERROR_CODE_NO_BANKS
+                        HttpStatus.NOT_FOUND
                 );
             }
 
@@ -142,7 +144,7 @@ public class BankService {
                                     log.error(LogMessages.FETCH_BANKS_ERROR, errorBody);
                                     return Mono.error(new CustomException(
                                             ValidationMessages.FETCHING_FAILED + " " + errorBody,
-                                            ValidationMessages.ERROR_CODE_FETCH_FAILED
+                                            HttpStatus.BAD_REQUEST
                                     ));
                                 })
                 )
@@ -153,7 +155,7 @@ public class BankService {
             log.warn(LogMessages.FETCH_BANKS_NULL);
             throw new CustomException(
                     ValidationMessages.NO_BANKS_FOUND,
-                    ValidationMessages.ERROR_CODE_NO_BANKS
+                    HttpStatus.NOT_FOUND
             );
         }
 
@@ -339,93 +341,200 @@ public class BankService {
         }
     }
 
-    public HttpResponseDTO getTransactions(String mobile, String ip, String deviceId,
-                                           Double latitude, Double longitude,
-                                           String accountNumber,
-                                           LocalDate fromDate, LocalDate toDate,
-                                           String filterType, String transactionType, int limit) {
+//    public HttpResponseDTO getTransactions(String mobile, String ip, String deviceId,
+//                                           Double latitude, Double longitude,
+//                                           String accountNumber,
+//                                           LocalDate fromDate, LocalDate toDate,
+//                                           String filterType, String transactionType, int limit) {
+//
+//        HttpResponseDTO response = new HttpResponseDTO();
+//        validateDevice(ip, deviceId, latitude, longitude, mobile);
+//        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+//
+//        try {
+//            List<TransactionResponseDTO> transactions;
+//
+//            try {
+//                transactions = bankWebClient.get()
+//                        .uri("https://dummyjson.com/transactions")
+//                        .headers(httpHeaders -> httpHeaders.addAll(headers))
+//                        .retrieve()
+//                        .bodyToFlux(TransactionResponseDTO.class)
+//                        .collectList()
+//                        .block();
+//            } catch (Exception ex) {
+//                log.warn("Bank URL is not working, showing dummy data instead");
+//                transactions = getDummyShowTransactions();
+//            }
+//
+//            LocalDate today = LocalDate.now();
+//            LocalDate startDate;
+//            LocalDate endDate = today;
+//
+//            if (filterType != null) {
+//                switch (filterType.toUpperCase()) {
+//                    case "1M":
+//                        startDate = today.minusMonths(1);
+//                        break;
+//                    case "3M":
+//                        startDate = today.minusMonths(3);
+//                        break;
+//                    case "6M":
+//                        startDate = today.minusMonths(6);
+//                        break;
+//                    case "CUSTOM":
+//                        startDate = fromDate != null ? fromDate : today.minusMonths(1);
+//                        endDate = toDate != null ? toDate : today;
+//                        break;
+//                    default:
+//                        startDate = today.minusMonths(1);
+//                }
+//            } else {
+//                startDate = today.minusMonths(1);
+//            }
+//
+//            LocalDate finalStartDate = startDate;
+//            LocalDate finalEndDate = endDate;
+//            transactions = transactions.stream()
+//                    .filter(txn -> txn.getTransactionDate() != null)
+//                    .filter(txn -> {
+//                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+//                        return (txnDate.isEqual(finalStartDate) || txnDate.isAfter(finalStartDate))
+//                                && (txnDate.isEqual(finalEndDate) || txnDate.isBefore(finalEndDate));
+//                    })
+//                    .filter(txn -> {
+//                        if ("ALL".equalsIgnoreCase(transactionType)) return true;
+//                        return txn.getTransactionType().equalsIgnoreCase(transactionType);
+//                    })
+//                    .sorted(Comparator.comparing(TransactionResponseDTO::getTransactionDate).reversed())
+//                    .limit(limit)
+//                    .collect(Collectors.toList());
+//
+//            response.setResponseCode(200);
+//            response.setResponseMessage("Transactions fetched successfully");
+//            response.setStatus("SUCCESS");
+//            response.setResponseData(transactions);
+//
+//            return response;
+//
+//        } catch (Exception e) {
+//            log.error("Error fetching transactions", e);
+//            response.setResponseCode(500);
+//            response.setResponseMessage("Error while fetching transactions: " + e.getMessage());
+//            response.setStatus("FAILED");
+//            return response;
+//        }
+//    }
 
-        HttpResponseDTO response = new HttpResponseDTO();
+    public ResponseEntity<HttpResponseDTO> getTransactions(String mobile, String accountNumber, LocalDate fromDate, LocalDate toDate, String searchTerm, int limit, String ip, String deviceId, Double latitude, Double longitude
+    ) {
+
         validateDevice(ip, deviceId, latitude, longitude, mobile);
-        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
         try {
-            List<TransactionResponseDTO> transactions;
 
-            try {
-                transactions = bankWebClient.get()
-                        .uri("https://dummyjson.com/transactions")
-                        .headers(httpHeaders -> httpHeaders.addAll(headers))
-                        .retrieve()
-                        .bodyToFlux(TransactionResponseDTO.class)
-                        .collectList()
-                        .block();
-            } catch (Exception ex) {
-                log.warn("Bank URL is not working, showing dummy data instead");
-                transactions = getDummyShowTransactions();
+          String url = "/transactions?accountNumber=" + accountNumber;
+            HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
+//            List<TransactionResponseDTO> allTransactions = bankWebClient.get()
+//                    .uri(url)
+//                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+//                    .retrieve()
+//                    .bodyToFlux(TransactionResponseDTO.class)
+//                    .collectList()
+//                    .block();
+
+            List<TransactionResponseDTO> allTransactions = List.of(
+                    // 🔹 Last 1 month
+                    new TransactionResponseDTO("Swiggy", "DEBIT", 650.00, "UPI", LocalDateTime.now().minusDays(2)),
+                    new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(5)),
+                    new TransactionResponseDTO("Amazon", "DEBIT", 2300.00, "CREDIT_CARD", LocalDateTime.now().minusDays(12)),
+                    new TransactionResponseDTO("Big Bazaar", "DEBIT", 1150.00, "DEBIT_CARD", LocalDateTime.now().minusDays(20)),
+                    new TransactionResponseDTO("Salary", "CREDIT", 55000.00, "NEFT", LocalDateTime.now().minusDays(27)),
+
+                    // 🔹 Last 3 months
+                    new TransactionResponseDTO("Electricity Board", "DEBIT", 1350.00, "NET_BANKING", LocalDateTime.now().minusMonths(1).minusDays(4)),
+                    new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.now().minusMonths(2).minusDays(5)),
+                    new TransactionResponseDTO("Credit Card Bill", "DEBIT", 18500.00, "NET_BANKING", LocalDateTime.now().minusMonths(3).minusDays(2)),
+
+                    // 🔹 Last 6 months
+                    new TransactionResponseDTO("Mutual Fund SIP", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusMonths(4).minusDays(8)),
+                    new TransactionResponseDTO("Gym Membership", "DEBIT", 3500.00, "CREDIT_CARD", LocalDateTime.now().minusMonths(5).minusDays(2)),
+                    new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.now().minusMonths(6).minusDays(1)),
+
+                    // 🔹 Last 2 years
+                    new TransactionResponseDTO("Car Loan EMI", "DEBIT", 8500.00, "AUTODEBIT", LocalDateTime.now().minusYears(1).minusMonths(2)),
+                    new TransactionResponseDTO("FD Interest", "CREDIT", 6400.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(1).minusMonths(5)),
+                    new TransactionResponseDTO("Travel Booking", "DEBIT", 21000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(2).minusDays(20)),
+
+                    // 🔹 Last 3 years
+                    new TransactionResponseDTO("Home Renovation", "DEBIT", 68000.00, "NEFT", LocalDateTime.now().minusYears(2).minusMonths(8)),
+                    new TransactionResponseDTO("Tax Refund", "CREDIT", 14500.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(3).minusMonths(2)),
+                    new TransactionResponseDTO("Laptop Purchase", "DEBIT", 56000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(7))
+            );
+
+
+
+            if (allTransactions == null || allTransactions.isEmpty()) {
+                return ResponseEntity.ok(
+                        new HttpResponseDTO("SUCCESS", 200, "No transactions found", Collections.emptyList())
+                );
             }
 
-            LocalDate today = LocalDate.now();
-            LocalDate startDate;
-            LocalDate endDate = today;
-
-            if (filterType != null) {
-                switch (filterType.toUpperCase()) {
-                    case "1M":
-                        startDate = today.minusMonths(1);
-                        break;
-                    case "3M":
-                        startDate = today.minusMonths(3);
-                        break;
-                    case "6M":
-                        startDate = today.minusMonths(6);
-                        break;
-                    case "CUSTOM":
-                        startDate = fromDate != null ? fromDate : today.minusMonths(1);
-                        endDate = toDate != null ? toDate : today;
-                        break;
-                    default:
-                        startDate = today.minusMonths(1);
-                }
-            } else {
-                startDate = today.minusMonths(1);
+            Stream<TransactionResponseDTO> stream = allTransactions.stream();
+            if (fromDate != null && toDate != null) {
+                stream = stream.filter(t -> {
+                    LocalDate txnDate = t.getTransactionDate().toLocalDate();
+                    return !txnDate.isBefore(fromDate) && !txnDate.isAfter(toDate);
+                });
             }
 
-            LocalDate finalStartDate = startDate;
-            LocalDate finalEndDate = endDate;
-            transactions = transactions.stream()
-                    .filter(txn -> txn.getTransactionDate() != null)
-                    .filter(txn -> {
-                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
-                        return (txnDate.isEqual(finalStartDate) || txnDate.isAfter(finalStartDate))
-                                && (txnDate.isEqual(finalEndDate) || txnDate.isBefore(finalEndDate));
-                    })
-                    .filter(txn -> {
-                        if ("ALL".equalsIgnoreCase(transactionType)) return true;
-                        return txn.getTransactionType().equalsIgnoreCase(transactionType);
-                    })
+            if (searchTerm != null && !searchTerm.isEmpty()) {
+                String lowerSearch = searchTerm.toLowerCase();
+                stream = stream.filter(t ->
+                        t.getMerchantName().toLowerCase().contains(lowerSearch)
+                                || t.getTransactionType().toLowerCase().contains(lowerSearch)
+                                || t.getPaymentMode().toLowerCase().contains(lowerSearch)
+                                || String.valueOf(t.getAmount()).contains(lowerSearch)
+                                || t.getTransactionDate().toString().contains(lowerSearch)
+                );
+            }
+
+            List<TransactionResponseDTO> filtered = stream
                     .sorted(Comparator.comparing(TransactionResponseDTO::getTransactionDate).reversed())
                     .limit(limit)
-                    .collect(Collectors.toList());
+                    .toList();
 
-            response.setResponseCode(200);
-            response.setResponseMessage("Transactions fetched successfully");
-            response.setStatus("SUCCESS");
-            response.setResponseData(transactions);
+            HttpResponseDTO response = new HttpResponseDTO(
+                    "SUCCESS",
+                    200,
+                    "Transactions fetched successfully",
+                    filtered
+            );
+            return ResponseEntity.ok(response);
 
-            return response;
+        } catch (CustomException e) {
+            log.error("External API error: {}", e.getMessage());
+            HttpResponseDTO response = new HttpResponseDTO(
+                    "FAILED",
+                    e.getErrorCode().value(),
+                    "Error from external API: " + e.getMessage()
+            );
+            return ResponseEntity.status(e.getErrorCode().value()).body(response);
 
         } catch (Exception e) {
-            log.error("Error fetching transactions", e);
-            response.setResponseCode(500);
-            response.setResponseMessage("Error while fetching transactions: " + e.getMessage());
-            response.setStatus("FAILED");
-            return response;
+            log.error("Unexpected error: {}", e.getMessage());
+            HttpResponseDTO response = new HttpResponseDTO(
+                    "FAILED",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal server error"
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
 
-    private List<TransactionResponseDTO> getDummyShowTransactions() {
+    private List<TransactionResponseDTO> getDummySearchTransactions() {
         List<TransactionResponseDTO> dummy = new ArrayList<>();
 
         dummy.add(TransactionResponseDTO.builder()
@@ -509,6 +618,86 @@ public class BankService {
                 .build());
 
         return dummy;
+    }
+
+
+    public ResponseEntity<HttpResponseDTO> searchTransactions(
+            String mobile,
+            String ip,
+            String deviceId,
+            Double latitude,
+            Double longitude,
+            String accountNumber,
+            String searchTerm
+    ) {
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+         List<TransactionResponseDTO> allTransactions= List.of(
+                new TransactionResponseDTO("Swiggy", "DEBIT", 650.00, "UPI", LocalDateTime.now().minusDays(2)),
+                new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(5)),
+                new TransactionResponseDTO("Amazon", "DEBIT", 2300.00, "CREDIT_CARD", LocalDateTime.now().minusDays(12)),
+                new TransactionResponseDTO("Big Bazaar", "DEBIT", 1150.00, "DEBIT_CARD", LocalDateTime.now().minusDays(20)),
+                new TransactionResponseDTO("Salary", "CREDIT", 55000.00, "NEFT", LocalDateTime.now().minusDays(27)),
+                new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.now().minusMonths(2)),
+                new TransactionResponseDTO("Car Loan EMI", "DEBIT", 8500.00, "AUTODEBIT", LocalDateTime.now().minusYears(1).minusMonths(2)),
+                new TransactionResponseDTO("Travel Booking", "DEBIT", 21000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(2).minusDays(20)),
+                new TransactionResponseDTO("Tax Refund", "CREDIT", 14500.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(3).minusMonths(2))
+        );
+        try {
+            String url = "/transactions?accountNumber=" + accountNumber;
+
+            HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
+
+//            List<TransactionResponseDTO> allTransactions = bankWebClient.get()
+//                    .uri(url)
+//                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+//                    .retrieve()
+//                    .bodyToFlux(TransactionResponseDTO.class)
+//                    .collectList()
+//                    .block();
+
+            if (allTransactions == null || allTransactions.isEmpty()) {
+                return ResponseEntity.ok(
+                        new HttpResponseDTO("SUCCESS", 200, "No transactions found", Collections.emptyList())
+                );
+            }
+
+            Stream<TransactionResponseDTO> filteredStream = allTransactions.stream();
+            if (searchTerm != null && !searchTerm.isEmpty()) {
+                String lowerSearch = searchTerm.toLowerCase();
+
+                filteredStream = filteredStream.filter(txn -> {
+                    String merchant = txn.getMerchantName() != null ? txn.getMerchantName().toLowerCase() : "";
+                    boolean matchesMerchant = merchant.startsWith(lowerSearch);
+                    boolean matchesAmount = false;
+                    try {
+                        double searchAmount = Double.parseDouble(searchTerm);
+                        matchesAmount = txn.getAmount() == searchAmount;
+                    } catch (NumberFormatException ignored) {
+                    }
+
+                    return matchesMerchant || matchesAmount;
+                });
+            }
+
+
+            List<TransactionResponseDTO> filteredTransactions = filteredStream
+                    .sorted(Comparator.comparing(TransactionResponseDTO::getTransactionDate).reversed())
+                    .toList();
+
+            HttpResponseDTO response = new HttpResponseDTO(
+                    "SUCCESS",
+                    200,
+                    filteredTransactions.isEmpty() ? "No matching transactions found" : "Transactions fetched successfully",
+                    filteredTransactions
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error while fetching transactions: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new HttpResponseDTO("FAILED", 500, "Internal Server Error"));
+        }
     }
 
 

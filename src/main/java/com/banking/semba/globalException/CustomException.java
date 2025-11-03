@@ -1,14 +1,17 @@
 package com.banking.semba.globalException;
 
-public class CustomException extends RuntimeException {
-    private final String errorCode;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 
-    public CustomException(String message, String errorCode) {
+public class CustomException extends RuntimeException {
+    private final HttpStatus errorCode;
+
+    public CustomException(String message, HttpStatus errorCode) {
         super(message);
         this.errorCode = errorCode;
     }
 
-    public String getErrorCode() {
+    public HttpStatusCode getErrorCode() {
         return errorCode;
     }
 }
