@@ -1,9 +1,9 @@
 package com.banking.semba.service;
 
-import com.banking.semba.globalException.CustomException;
 import com.banking.semba.constants.LogMessages;
 import com.banking.semba.constants.ValidationMessages;
 import com.banking.semba.dto.*;
+import com.banking.semba.globalException.CustomException;
 import com.banking.semba.security.JwtTokenService;
 import com.banking.semba.util.MPINValidatorUtil;
 import com.banking.semba.util.UserServiceUtils;
@@ -21,7 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -610,181 +609,203 @@ public class BankService {
         }
     }
 
+    public HttpResponseDTO downloadAccountStatement(String mobile, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, String range, LocalDate fromDate, LocalDate toDate
+    ) {
 
-//    public ResponseEntity<HttpResponseDTO> getStatement(
-//            String auth,
-//            String ip,
-//            String deviceId,
-//            Double latitude,
-//            Double longitude,
-//            String accountNumber,
-//            String range,
-//            LocalDate fromDate,
-//            LocalDate toDate
-//    ) {
-//        String mobile = jwtTokenService.extractMobileFromHeader(auth);
-//        if (mobile == null || mobile.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-//                    .body(new HttpResponseDTO("FAILED", 401, "Invalid or expired token"));
-//        }
-//
-//        LocalDate today = LocalDate.now();
-//        LocalDate startDate = switch (range) {
-//            case "30" -> today.minusDays(30);
-//            case "90" -> today.minusDays(90);
-//            case "180" -> today.minusDays(180);
-//            case "365" -> today.minusDays(365);
-//            case "custom" -> (fromDate != null) ? fromDate : today.minusDays(30);
-//            default -> today.minusDays(30);
-//        };
-//        LocalDate endDate = (range.equals("custom") && toDate != null) ? toDate : today;
-//
-//        log.info("📡 Fetching transactions for account {} between {} and {}", accountNumber, startDate, endDate);
-//
-//        try {
-////            List<TransactionResponseDTO> transactions = bankWebClient.get()
-////                    .uri(uriBuilder -> uriBuilder
-////                            .path("/external/transactions")
-////                            .queryParam("accountNumber", accountNumber)
-////                            .queryParam("fromDate", startDate)
-////                            .queryParam("toDate", endDate)
-////                            .build())
-////                    .headers(headers -> {
-////                        headers.setBearerAuth(auth.replace("Bearer ", ""));
-////                        headers.add("X-IP", ip);
-////                        headers.add("X-Device-Id", deviceId);
-////                        if (latitude != null) headers.add("X-Latitude", latitude.toString());
-////                        if (longitude != null) headers.add("X-Longitude", longitude.toString());
-////                    })
-////                    .retrieve()
-////                    .bodyToFlux(TransactionResponseDTO.class)
-////                    .collectList()
-////                    .onErrorResume(ex -> {
-////                        log.error("Error fetching statement: {}", ex.getMessage());
-////                        return Mono.just(List.of());
-////                    })
-////                    .block();
-//
-//            List<TransactionResponseDTO> transactions = List.of(
-//                    new TransactionResponseDTO("Swiggy", "DEBIT", 550.00, "UPI", LocalDateTime.now().minusDays(5)),
-//                    new TransactionResponseDTO("Amazon", "DEBIT", 2500.00, "CREDIT_CARD", LocalDateTime.now().minusDays(15)),
-//                    new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.now().minusDays(25)),
-//                    new TransactionResponseDTO("Flipkart", "DEBIT", 1300.00, "DEBIT_CARD", LocalDateTime.now().minusDays(40)),
-//                    new TransactionResponseDTO("Big Bazaar", "DEBIT", 780.00, "NET_BANKING", LocalDateTime.now().minusDays(75)),
-//                    new TransactionResponseDTO("Electricity Board", "DEBIT", 1250.00, "NET_BANKING", LocalDateTime.now().minusMonths(3).minusDays(10)),
-//                    new TransactionResponseDTO("Mobile Recharge", "DEBIT", 299.00, "UPI", LocalDateTime.now().minusMonths(4)),
-//                    new TransactionResponseDTO("Gym Membership", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusMonths(5)),
-//                    new TransactionResponseDTO("Credit Card Bill", "DEBIT", 14500.00, "NET_BANKING", LocalDateTime.now().minusMonths(7)),
-//                    new TransactionResponseDTO("Salary", "CREDIT", 60000.00, "BANK_TRANSFER", LocalDateTime.now().minusMonths(8)),
-//                    new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.now().minusYears(1).minusMonths(2)),
-//                    new TransactionResponseDTO("FD Interest", "CREDIT", 5400.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(1).minusMonths(5)),
-//                    new TransactionResponseDTO("Car Loan EMI", "DEBIT", 8500.00, "AUTODEBIT", LocalDateTime.now().minusYears(2).minusMonths(1)),
-//                    new TransactionResponseDTO("Mutual Fund SIP", "DEBIT", 2000.00, "AUTODEBIT", LocalDateTime.now().minusYears(2).minusMonths(6)),
-//                    new TransactionResponseDTO("Travel Booking", "DEBIT", 17500.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(2)),
-//                    new TransactionResponseDTO("Tax Refund", "CREDIT", 9500.00, "BANK_TRANSFER", LocalDateTime.now().minusYears(3).minusMonths(5)),
-//                    new TransactionResponseDTO("Laptop Purchase", "DEBIT", 56000.00, "CREDIT_CARD", LocalDateTime.now().minusYears(3).minusMonths(7))
-//            );
-//
-//            List<TransactionResponseDTO> filteredTransactions = transactions.stream()
-//                    .filter(txn -> {
-//                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
-//                        return (txnDate.isEqual(startDate) || txnDate.isAfter(startDate))
-//                                && (txnDate.isEqual(endDate) || txnDate.isBefore(endDate));
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            return ResponseEntity.ok(
-//                    new HttpResponseDTO("SUCCESS", 200, "Statement fetched successfully", transactions)
-//            );
-//
-//        } catch (Exception e) {
-//            log.error("🔥 Exception while fetching statement", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(new HttpResponseDTO("FAILED", 500, "Error fetching statement data"));
-//        }
-//    }
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
-public ResponseEntity<HttpResponseDTO> getStatement(
-        String auth,
-        String ip,
-        String deviceId,
-        Double latitude,
-        Double longitude,
-        String accountNumber,
-        String range,
-        LocalDate fromDate,
-        LocalDate toDate
-) {
-    String mobile = jwtTokenService.extractMobileFromHeader(auth);
-    if (mobile == null || mobile.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new HttpResponseDTO("FAILED", 401, "Invalid or expired token"));
-    }
+////    try {
+//////            List<TransactionResponseDTO> transactions = bankWebClient.get()
+//////                    .uri(uriBuilder -> uriBuilder
+//////                            .path("/external/transactions")
+//////                            .queryParam("accountNumber", accountNumber)
+//////                            .queryParam("fromDate", startDate)
+//////                            .queryParam("toDate", endDate)
+//////                            .build())
+//////                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+//////                    .retrieve()
+//////                    .bodyToFlux(TransactionResponseDTO.class)
+//////                    .collectList()
+//////                    .onErrorResume(ex -> {
+//////                        log.error("Error fetching statement: {}", ex.getMessage());
+//////                        return Mono.just(List.of());
+//////                    })
+//////                    .block();
 
-    LocalDate today = LocalDate.now();
-    String safeRange = (range == null || range.isBlank()) ? "30" : range.trim();
+        try {
+            Map<String, LocalDate> dateRange = getStatementDateRange(range, fromDate, toDate);
+            LocalDate startDate = dateRange.get("startDate");
+            LocalDate endDate = dateRange.get("endDate");
 
-    LocalDate startDate;
-    LocalDate endDate;
+            List<TransactionResponseDTO> transactions = getDummyTransactions();
+            List<TransactionResponseDTO> filteredTxns = transactions.stream()
+                    .filter(txn -> {
+                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+                        return (!txnDate.isBefore(startDate)) && (!txnDate.isAfter(endDate));
+                    })
+                    .collect(Collectors.toList());
 
-    switch (safeRange) {
-        case "30" -> {
-            startDate = today.minusDays(30);
-            endDate = today;
-        }
-        case "60" -> {
-            startDate = today.minusDays(60);
-            endDate = today;
-        }
-        case "180" -> {
-            startDate = today.minusDays(180);
-            endDate = today;
-        }
-        case "365" -> {
-            startDate = today.minusDays(365);
-            endDate = today;
-        }
-        case "custom" -> {
-            startDate = (fromDate != null) ? fromDate : today.minusDays(30);
-            endDate = (toDate != null) ? toDate : today;
-        }
-        default -> {
-            startDate = today.minusDays(30);
-            endDate = today;
+            if (filteredTxns.isEmpty()) {
+                return new HttpResponseDTO(
+                        ValidationMessages.FAILED,
+                        HttpStatus.NOT_FOUND.value(),
+                        "No transactions found for given period"
+                );
+            }
+
+            double openingBalance = 10000.00; // Assume fetched from DB or last statement
+            double balance = openingBalance;
+
+            List<AccountTransactionDTO> txnList = new ArrayList<>();
+
+            for (TransactionResponseDTO txn : filteredTxns) {
+                double debit = txn.getTransactionType().equalsIgnoreCase("DEBIT") ? txn.getAmount() : 0.0;
+                double credit = txn.getTransactionType().equalsIgnoreCase("CREDIT") ? txn.getAmount() : 0.0;
+                balance += credit - debit;
+
+                txnList.add(new AccountTransactionDTO(
+                        txn.getTransactionDate().toLocalDate().toString(),
+                        txn.getMerchantName(),
+                        "—",
+                        txn.getPaymentMode(),
+                        debit,
+                        credit,
+                        balance
+                ));
+            }
+
+            DownloadStatementDTO statement = DownloadStatementDTO.builder()
+                    .accountHolderName("Mr. Raj Upadhyay")
+                    .address("Sultanpur, Uttar Pradesh, India")
+                    .statementDate(LocalDateTime.now())
+                    .accountNumber(accountNumber)
+                    .accountDescription("Savings Account")
+                    .branch("Sultanpur Branch")
+                    .drawingPower(0)
+                    .interestRate(3.5)
+                    .cifNumber("123456789")
+                    .ifscCode("SBIN0000123")
+                    .micrCode("110002345")
+                    .ckYcNumber("KYC12345")
+                    .nominationRegistered("Yes")
+                    .balanceAsOn(balance)
+                    .searchPeriod(startDate + " to " + endDate)
+                    .transactions(txnList)
+                    .build();
+
+            return new HttpResponseDTO(
+                    ValidationMessages.SUCCESS,
+                    HttpStatus.OK.value(),
+                    "Statement fetched successfully",
+                    statement
+            );
+
+        } catch (Exception e) {
+            log.error("Error fetching statement: {}", e.getMessage(), e);
+            return new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Error fetching statement data"
+            );
         }
     }
 
-    if (fromDate != null && toDate != null) {
-        startDate = fromDate;
-        endDate = toDate;
+    private Map<String, LocalDate> getStatementDateRange(String range, LocalDate fromDate, LocalDate toDate) {
+        LocalDate today = LocalDate.now();
+        Map<String, LocalDate> dateRange = new HashMap<>();
+        LocalDate startDate;
+        LocalDate endDate;
+
+        if (fromDate != null && toDate != null) {
+            if (fromDate.isAfter(toDate)) {
+                LocalDate temp = fromDate;
+                fromDate = toDate;
+                toDate = temp;
+            }
+
+            startDate = fromDate;
+            endDate = toDate;
+
+        } else {
+            switch (range != null ? range.toUpperCase() : "30_DAYS") {
+
+                case "CURRENT_MONTH" -> {
+                    startDate = today.withDayOfMonth(1);
+                    endDate = today;
+                }
+
+                case "30_DAYS" -> {
+                    startDate = today.minusDays(30);
+                    endDate = today;
+                }
+                case "60_DAYS" -> {
+                    startDate = today.minusDays(60);
+                    endDate = today;
+                }
+                case "90_DAYS" -> {
+                    startDate = today.minusDays(90);
+                    endDate = today;
+                }
+                case "120_DAYS" -> {
+                    startDate = today.minusDays(120);
+                    endDate = today;
+                }
+                case "180_DAYS" -> {
+                    startDate = today.minusDays(180);
+                    endDate = today;
+                }
+                case "365_DAYS" -> {
+                    startDate = today.minusDays(365);
+                    endDate = today;
+                }
+
+                case "CURRENT_FY" -> {
+                    startDate = getFinancialYearStart(today);
+                    endDate = getFinancialYearEnd(today);
+                }
+
+                case "FY_PREV_1" -> {
+                    startDate = getFinancialYearStart(today).minusYears(1);
+                    endDate = getFinancialYearEnd(today).minusYears(1);
+                }
+                case "FY_PREV_2" -> {
+                    startDate = getFinancialYearStart(today).minusYears(2);
+                    endDate = getFinancialYearEnd(today).minusYears(2);
+                }
+                case "FY_PREV_3" -> {
+                    startDate = getFinancialYearStart(today).minusYears(3);
+                    endDate = getFinancialYearEnd(today).minusYears(3);
+                }
+                case "FY_PREV_4" -> {
+                    startDate = getFinancialYearStart(today).minusYears(4);
+                    endDate = getFinancialYearEnd(today).minusYears(4);
+                }
+
+                default -> {
+                    startDate = today.minusDays(30);
+                    endDate = today;
+                }
+            }
+        }
+
+        dateRange.put("startDate", startDate);
+        dateRange.put("endDate", endDate);
+        return dateRange;
     }
 
-    log.info("📡 Fetching statement for account {} between {} and {}", accountNumber, startDate, endDate);
-//    try {
-////            List<TransactionResponseDTO> transactions = bankWebClient.get()
-////                    .uri(uriBuilder -> uriBuilder
-////                            .path("/external/transactions")
-////                            .queryParam("accountNumber", accountNumber)
-////                            .queryParam("fromDate", startDate)
-////                            .queryParam("toDate", endDate)
-////                            .build())
-////                    .headers(headers -> {
-////                        headers.setBearerAuth(auth.replace("Bearer ", ""));
-////                        headers.add("X-IP", ip);
-////                        headers.add("X-Device-Id", deviceId);
-////                        if (latitude != null) headers.add("X-Latitude", latitude.toString());
-////                        if (longitude != null) headers.add("X-Longitude", longitude.toString());
-////                    })
-////                    .retrieve()
-////                    .bodyToFlux(TransactionResponseDTO.class)
-////                    .collectList()
-////                    .onErrorResume(ex -> {
-////                        log.error("Error fetching statement: {}", ex.getMessage());
-////                        return Mono.just(List.of());
-////                    })
-////                    .block();
-    try {
-        List<TransactionResponseDTO> transactions = List.of(
+    private LocalDate getFinancialYearStart(LocalDate today) {
+        int year = today.getMonthValue() < 4 ? today.getYear() - 1 : today.getYear();
+        return LocalDate.of(year, 4, 1);
+    }
+
+    private LocalDate getFinancialYearEnd(LocalDate today) {
+        int year = today.getMonthValue() < 4 ? today.getYear() : today.getYear() + 1;
+        return LocalDate.of(year, 3, 31);
+    }
+
+    private List<TransactionResponseDTO> getDummyTransactions() {
+        return List.of(
                 new TransactionResponseDTO("Swiggy", "DEBIT", 599.00, "UPI", LocalDateTime.of(2025, 11, 1, 19, 30)),
                 new TransactionResponseDTO("Zomato", "DEBIT", 420.00, "UPI", LocalDateTime.of(2025, 10, 27, 20, 15)),
                 new TransactionResponseDTO("Amazon", "DEBIT", 1800.00, "CREDIT_CARD", LocalDateTime.of(2025, 10, 10, 14, 10)),
@@ -806,31 +827,65 @@ public ResponseEntity<HttpResponseDTO> getStatement(
                 new TransactionResponseDTO("Insurance Premium", "DEBIT", 12000.00, "NET_BANKING", LocalDateTime.of(2023, 1, 25, 17, 40)),
                 new TransactionResponseDTO("FD Interest", "CREDIT", 5400.00, "BANK_TRANSFER", LocalDateTime.of(2023, 2, 15, 10, 10))
         );
-
-        final LocalDate finalStartDate = startDate;
-        final LocalDate finalEndDate = endDate;
-
-        List<TransactionResponseDTO> filteredTransactions = transactions.stream()
-                .filter(txn -> {
-                    LocalDate txnDate = txn.getTransactionDate().toLocalDate();
-                    return (!txnDate.isBefore(finalStartDate)) && (!txnDate.isAfter(finalEndDate));
-                })
-                .collect(Collectors.toList());
-
-        log.info("Found {} transactions between {} and {}", filteredTransactions.size(), startDate, endDate);
-
-        return ResponseEntity.ok(
-                new HttpResponseDTO("SUCCESS", 200, "Statement fetched successfully", filteredTransactions)
-        );
-
-    } catch (Exception e) {
-        log.error("Error fetching statement: {}", e.getMessage(), e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new HttpResponseDTO("FAILED", 500, "Error fetching statement data"));
     }
-}
 
+    public HttpResponseDTO downloadTransactionStatement(String mobile, String ip, String deviceId, Double latitude, Double longitude, String accountNumber, String range, LocalDate fromDate, LocalDate toDate) {
+        validateDevice(ip, deviceId, latitude, longitude, mobile);
+        HttpHeaders headers = authService.buildHeaders(mobile, ip, deviceId, latitude, longitude);
 
+////    try {
+//////            List<TransactionResponseDTO> transactions = bankWebClient.get()
+//////                    .uri(uriBuilder -> uriBuilder
+//////                            .path("/external/transactions")
+//////                            .queryParam("accountNumber", accountNumber)
+//////                            .queryParam("fromDate", startDate)
+//////                            .queryParam("toDate", endDate)
+//////                            .build())
+//////                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+//////                    .retrieve()
+//////                    .bodyToFlux(TransactionResponseDTO.class)
+//////                    .collectList()
+//////                    .onErrorResume(ex -> {
+//////                        log.error("Error fetching statement: {}", ex.getMessage());
+//////                        return Mono.just(List.of());
+//////                    })
+//////                    .block();
 
+        try {
+            Map<String, LocalDate> dateRange = getStatementDateRange(range, fromDate, toDate);
+            LocalDate startDate = dateRange.get("startDate");
+            LocalDate endDate = dateRange.get("endDate");
 
+            List<TransactionResponseDTO> transactions = getDummyTransactions();
+            List<TransactionResponseDTO> filteredTxns = transactions.stream()
+                    .filter(txn -> {
+                        LocalDate txnDate = txn.getTransactionDate().toLocalDate();
+                        return (!txnDate.isBefore(startDate)) && (!txnDate.isAfter(endDate));
+                    })
+                    .collect(Collectors.toList());
+
+            if (filteredTxns.isEmpty()) {
+                return new HttpResponseDTO(
+                        ValidationMessages.FAILED,
+                        HttpStatus.NOT_FOUND.value(),
+                        "No transactions found for given period"
+                );
+            }
+
+            return new HttpResponseDTO(
+                    ValidationMessages.SUCCESS,
+                    HttpStatus.OK.value(),
+                    "Statement fetched successfully",
+                    filteredTxns
+            );
+
+        } catch (Exception e) {
+            log.error("Error fetching statement: {}", e.getMessage(), e);
+            return new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Error fetching statement data"
+            );
+        }
+    }
 }

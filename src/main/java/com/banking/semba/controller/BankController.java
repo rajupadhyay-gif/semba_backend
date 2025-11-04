@@ -158,11 +158,12 @@ public class BankController {
             );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        return bankService.searchTransactions(mobile, ip, deviceId, latitude, longitude, accountNumber, searchTerm);
+        ResponseEntity<HttpResponseDTO> serviceResponse= bankService.searchTransactions(mobile, ip, deviceId, latitude, longitude, accountNumber, searchTerm);
+        return serviceResponse;
     }
 
     @GetMapping("/downloadStatement")
-    public ResponseEntity<HttpResponseDTO> downloadStatement(
+    public ResponseEntity<HttpResponseDTO> downloadAccountStatement(
             @RequestHeader("Authorization") String auth,
             @RequestHeader("X-IP") String ip,
             @RequestHeader("X-Device-Id") String deviceId,
@@ -173,7 +174,48 @@ public class BankController {
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate
     ) {
-        return bankService.getStatement(auth, ip, deviceId, latitude, longitude, accountNumber, range, fromDate, toDate);
+        String mobile = jwtService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        HttpResponseDTO response = bankService.downloadAccountStatement(
+                mobile, ip, deviceId, latitude, longitude, accountNumber, range, fromDate, toDate
+        );
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+
+    }
+
+    @GetMapping("/downloadTransactionStatement")
+    public ResponseEntity<HttpResponseDTO> downloadTransactionStatement(
+            @RequestHeader("Authorization") String auth,
+            @RequestHeader("X-IP") String ip,
+            @RequestHeader("X-Device-Id") String deviceId,
+            @RequestHeader(value = "X-Latitude", required = false) Double latitude,
+            @RequestHeader(value = "X-Longitude", required = false) Double longitude,
+            @RequestParam String accountNumber,
+            @RequestParam(required = false) String range,
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate
+    ) {
+        String mobile = jwtService.extractMobileFromHeader(auth);
+        if (mobile == null || mobile.isEmpty()) {
+            HttpResponseDTO response = new HttpResponseDTO(
+                    ValidationMessages.FAILED,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    ValidationMessages.USER_NOT_FOUND
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        HttpResponseDTO response = bankService.downloadTransactionStatement(
+                mobile, ip, deviceId, latitude, longitude, accountNumber, range, fromDate, toDate
+        );
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+
     }
 
 }
