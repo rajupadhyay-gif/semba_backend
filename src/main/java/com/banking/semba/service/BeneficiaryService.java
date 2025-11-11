@@ -219,13 +219,13 @@ public class BeneficiaryService {
         } catch (WebClientResponseException e) {
             throw new CustomException(
                     String.valueOf(e.getStatusCode().value()),
-                    ValidationMessages.EXTERNAL_API_ERROR + ": " + e.getResponseBodyAsString()
+                    HttpStatus.INTERNAL_SERVER_ERROR
             );
 
         } catch (Exception ex) {
             throw new CustomException(
                     String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
-                    ValidationMessages.INTERNAL_SERVER_ERROR + ": " + ex.getMessage()
+                    HttpStatus.INTERNAL_SERVER_ERROR
             );
         }
     }

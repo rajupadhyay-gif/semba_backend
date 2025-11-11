@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @Builder
@@ -24,5 +26,8 @@ public class HttpResponseDTO {
         this.responseCode = responseCode;
         this.responseMessage = responseMessage;
         this.responseData = responseData;
+    }
+
+    public HttpResponseDTO(int value, String transactionsFetchedSuccessfully, List<TransactionResponseDTO> filtered) {
     }
 }

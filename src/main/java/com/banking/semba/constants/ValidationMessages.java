@@ -147,6 +147,11 @@ public class ValidationMessages {
 
     public static final String OTP_SEND_FAILED = "Failed to send OTP.";
     public static final String MOBILE_REQUIRED = "Mobile number is required.";
+    public static final String TRANSACTIONS_FETCHED_SUCCESSFULLY = "Transactions Fetched Successfully";
+    public static final String TRANSACTIONS_FETCHED_FAILED = "Failed to fetch Transactions";
+    public static final String NO_TRANSACTIONS_FOUND = "No transactions found";
+    public static final String FAILED = "FAILED";
+    public static final String SUCCESS = "SUCCESS";
 
     private ValidationMessages() {
     }

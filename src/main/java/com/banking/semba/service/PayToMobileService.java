@@ -157,7 +157,8 @@ public class PayToMobileService {
                     .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
                                     .flatMap(error -> Mono.error(
-                                            new CustomException("External API failed: " + error, "Error")
+                                            new CustomException("External API failed: " + error,
+                                                    HttpStatus.INTERNAL_SERVER_ERROR)
                                     ))
                     )
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
